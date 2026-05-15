@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { StatusTracker } from '../status.js';
+import type { StatusSnapshot } from '../../shared/ipc.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -26,10 +28,18 @@ let confirmedSessionId: string | null = null;
 let pendingSessionId: string | null = null;
 let activeProc: ChildProcessWithoutNullStreams | null = null;
 
+// 세션 누적 status — PM은 앱 lifecycle 동안 하나의 ongoing conversation.
+const pmStatus = new StatusTracker('pm');
+
+export function getPMStatusSnapshot(): StatusSnapshot {
+  return pmStatus.snapshot();
+}
+
 export type PMCallbacks = {
   onChunk: (text: string) => void;
   onDone: (info: { exitCode: number; ok: boolean; reason?: string }) => void;
   onError: (err: string) => void;
+  onStatus: (snapshot: StatusSnapshot) => void;
 };
 
 function nextSessionArgs(): string[] {
@@ -106,9 +116,13 @@ export function sendToPM(userText: string, cb: PMCallbacks): void {
   });
 
   proc.on('exit', (code) => {
+    // exit 시점에 stdoutBuf에 newline 없는 마지막 partial line이 남아있을 수 있음 — flush
+    if (stdoutBuf.trim()) {
+      handleStreamLine(stdoutBuf.trim(), cb);
+      stdoutBuf = '';
+    }
     activeProc = null;
     if (code === 0 && pendingSessionId && !confirmedSessionId) {
-      // 첫 호출 성공 시점에 session 확정 — 이후는 --resume으로 재개
       confirmedSessionId = pendingSessionId;
       pendingSessionId = null;
     }
@@ -141,6 +155,9 @@ function handleStreamLine(line: string, cb: PMCallbacks): void {
   if (typeof event !== 'object' || event === null) return;
   const e = event as Record<string, unknown>;
 
+  // status 누적 (model, tokens, cost, rate limit)
+  pmStatus.ingest(e);
+
   // partial text chunks (--include-partial-messages)
   if (e['type'] === 'stream_event') {
     const inner = e['event'] as Record<string, unknown> | undefined;
@@ -153,23 +170,7 @@ function handleStreamLine(line: string, cb: PMCallbacks): void {
     return;
   }
 
-  // final assembled assistant message (fallback if partial events 안 옴)
-  if (e['type'] === 'assistant') {
-    const msg = e['message'] as Record<string, unknown> | undefined;
-    const content = msg?.['content'] as Array<Record<string, unknown>> | undefined;
-    if (Array.isArray(content)) {
-      for (const block of content) {
-        if (block['type'] === 'text' && typeof block['text'] === 'string') {
-          // partial 이벤트로 이미 chunk를 받았다면 중복 가능 — 일단 partial 우선이므로 final assistant는 무시
-        }
-      }
-    }
-    return;
-  }
-
-  // 최종 result — 메시지 종료 시그널
-  if (e['type'] === 'result') {
-    // onDone이 process exit으로 처리됨
-    return;
+  if (e['type'] === 'result' || e['type'] === 'rate_limit_event') {
+    cb.onStatus(pmStatus.snapshot());
   }
 }

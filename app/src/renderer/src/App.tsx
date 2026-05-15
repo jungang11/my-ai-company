@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Chat } from './components/Chat';
 import { EmployeeRoster } from './components/EmployeeRoster';
+import { StatusBar } from './components/StatusBar';
 import { newMessage, type ChatMessage } from './state/chat-store';
 import type { EmployeeRow } from './state/employee-store';
+import type { StatusInit, StatusSnapshot } from '../../shared/ipc';
 
 export function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [roster, setRoster] = useState<EmployeeRow[]>([]);
+  const [statusInit, setStatusInit] = useState<StatusInit | null>(null);
+  const [status, setStatus] = useState<StatusSnapshot | null>(null);
 
   useEffect(() => {
     if (!window.api) {
@@ -17,6 +21,12 @@ export function App() {
       ]);
       return;
     }
+
+    window.api.fetchStatusInit().then(setStatusInit).catch((err) => {
+      console.error('[payroll-os] fetchStatusInit failed:', err);
+    });
+
+    const offStatus = window.api.onStatus((snap) => setStatus(snap));
 
     const offData = window.api.onPMOutput(({ text }) => {
       setMessages((prev) => {
@@ -79,6 +89,7 @@ export function App() {
       offData();
       offExit();
       offRoster();
+      offStatus();
     };
   }, []);
 
@@ -99,11 +110,14 @@ export function App() {
   }
 
   return (
-    <main className="flex h-full bg-slate-900">
-      <EmployeeRoster rows={roster} />
-      <div className="flex flex-1 flex-col ring-1 ring-slate-800">
-        <Chat messages={messages} onSend={send} />
+    <main className="flex h-full flex-col bg-slate-900">
+      <div className="flex flex-1 overflow-hidden">
+        <EmployeeRoster rows={roster} />
+        <div className="flex flex-1 flex-col ring-1 ring-slate-800">
+          <Chat messages={messages} onSend={send} />
+        </div>
       </div>
+      <StatusBar init={statusInit} status={status} />
     </main>
   );
 }

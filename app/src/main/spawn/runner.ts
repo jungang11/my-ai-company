@@ -111,6 +111,10 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
   });
 
   proc.on('exit', (code) => {
+    if (stdoutBuf.trim()) {
+      handleLine(stdoutBuf.trim(), req.id, outputPath, cb);
+      stdoutBuf = '';
+    }
     active.delete(req.id);
     const exitCode = code ?? -1;
     writeFileSync(

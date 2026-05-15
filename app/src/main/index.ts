@@ -6,10 +6,13 @@ import {
   type PMExitPayload,
   type PMOutputPayload,
   type RosterUpdatePayload,
+  type StatusInit,
+  type StatusSnapshot,
 } from '../shared/ipc.js';
 import { killPM, sendToPM } from './employee/pm-runner.js';
 import { killAllSubs } from './spawn/runner.js';
 import { startSpawnWatcher, stopSpawnWatcher } from './spawn/watcher.js';
+import { getStatusInit } from './status.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -90,7 +93,17 @@ function wirePM(): void {
         const payload: PMExitPayload = { exitCode };
         mainWindow.webContents.send(IPC.pmExit, payload);
       },
+      onStatus: (snapshot) => {
+        if (!mainWindow) return;
+        const payload: StatusSnapshot = snapshot;
+        mainWindow.webContents.send(IPC.statusUpdate, payload);
+      },
     });
+  });
+
+  ipcMain.handle(IPC.statusInit, () => {
+    const init: StatusInit = getStatusInit();
+    return init;
   });
 }
 

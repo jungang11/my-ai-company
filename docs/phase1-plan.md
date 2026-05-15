@@ -88,6 +88,35 @@ PM에게 줄 시스템 프롬프트 업데이트: "sub 세션이 필요하면 `w
 
 ---
 
+### PR6.5 — `app: 상단/하단 statusbar (model · ctx · token · 5h · 7d · branch · project)` (S)
+
+**완료 기준**: 사장이 한눈에 현재 세션 상태를 본다.
+
+표시 항목:
+- **project**: 현재 프로젝트 이름 (package.json name 또는 cwd basename)
+- **branch**: git 현재 브랜치
+- **model**: 마지막 PM 응답의 model (예: `claude-opus-4-7`)
+- **ctx**: 누적 input_tokens / contextWindow → 퍼센트 (예: `30k / 1M (3%)`)
+- **token**: 누적 input/output/cache
+- **cost**: 누적 total_cost_usd
+- **5h reset**: rate_limit_event.rate_limit_info.resetsAt (5시간 limit reset 시각, status 'allowed' or 'limited')
+- **7d reset**: 7일 limit이 있을 경우 (없으면 표시 생략)
+
+데이터 소스: PM/sub 응답의 stream-json 마지막 result 이벤트 + rate_limit_event. main에서 추출해서 IPC로 송신.
+
+**변경 파일**:
+- `app/src/shared/ipc.ts` — `StatusSnapshot` 타입 + 채널
+- `app/src/main/employee/pm-runner.ts` — stream-json 파싱에서 status 추출 후 callback
+- `app/src/main/spawn/runner.ts` — 동일
+- `app/src/main/status.ts` — git branch / project 가져오기 + 마지막 status cache
+- `app/src/main/index.ts` — wireStatus, IPC 송신
+- `app/src/preload/index.ts` — `onStatus`
+- `app/src/renderer/src/components/StatusBar.tsx` — 하단 footer 한 줄
+- `app/src/renderer/src/state/status-store.ts`
+- `app/src/renderer/src/App.tsx` — StatusBar 통합
+
+---
+
 ### PR7 — `core/app: PM이 sub 세션 출력을 파일로 read + 본질 데모` (M)
 
 **완료 기준**:
@@ -108,11 +137,9 @@ PM에게 줄 시스템 프롬프트 업데이트: "sub 세션이 필요하면 `w
 
 ## 작업량 합계
 
-- 완료: 2S (PR1, PR2)
-- 남은: 5M (PR3~PR7)
-- 합계 약 **2 S + 5 M**. 1~2주 작업량.
-
-PR3~PR4는 일부 병렬 가능 (UI vs PTY 코어 분리).
+- 완료: 2S + 4M (PR1, PR2, PR3, PR4, PR5a, PR5b, PR6)
+- 남은: 1S (PR6.5) + 1M (PR7)
+- 합계 약 **3 S + 5 M**. 마무리 단계.
 
 ---
 

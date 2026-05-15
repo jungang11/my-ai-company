@@ -4,6 +4,8 @@ import {
   type PMExitPayload,
   type PMOutputPayload,
   type RosterUpdatePayload,
+  type StatusInit,
+  type StatusSnapshot,
 } from '../shared/ipc.js';
 
 const api = {
@@ -23,6 +25,12 @@ const api = {
     ipcRenderer.on(IPC.rosterUpdate, handler);
     return () => ipcRenderer.off(IPC.rosterUpdate, handler);
   },
+  onStatus: (cb: (p: StatusSnapshot) => void): (() => void) => {
+    const handler = (_evt: IpcRendererEvent, payload: StatusSnapshot) => cb(payload);
+    ipcRenderer.on(IPC.statusUpdate, handler);
+    return () => ipcRenderer.off(IPC.statusUpdate, handler);
+  },
+  fetchStatusInit: (): Promise<StatusInit> => ipcRenderer.invoke(IPC.statusInit),
 };
 
 contextBridge.exposeInMainWorld('api', api);
