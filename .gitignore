@@ -1,0 +1,103 @@
+# ===== Dependencies =====
+node_modules/
+.pnpm-store/
+.yarn/
+.npm/
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.Python
+
+# ===== Build outputs =====
+dist/
+build/
+out/
+target/
+*.egg-info/
+.eggs/
+*.tsbuildinfo
+
+# ===== Electron / Tauri =====
+release/
+src-tauri/target/
+src-tauri/gen/
+app/dist/
+
+# ===== Logs =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Environment & secrets =====
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+*.pem
+*.key
+secrets/
+.api-keys
+
+# ===== Worker / Employee workspaces (runtime data) =====
+# 직원들이 실제로 작업하는 폴더는 로컬에서만 보관
+workspace/runtime/
+workspace/sessions/
+workspace/cache/
+*.session.json
+
+# ===== Databases =====
+*.sqlite
+*.sqlite3
+*.db
+data/
+
+# ===== IDE / Editor =====
+.vscode/
+!.vscode/settings.example.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+
+# ===== Claude Code / agent CLI 산출물 =====
+.claude/cache/
+.claude/sessions/
+.codex/cache/
+.gemini/cache/
+
+# ===== OS =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ===== Test coverage =====
+coverage/
+.nyc_output/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# ===== Temporary =====
+tmp/
+temp/
+*.tmp
+
+# ===== External references (학습용 clone, 커밋 안 함) =====
+references/
+
+# ===== Claude Code 개인 설정 (권한 등) =====
+.claude/settings.local.json
