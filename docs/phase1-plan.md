@@ -25,7 +25,27 @@
 
 ---
 
-### PR3 — `app: 사장-PM 채팅 패널 (정적 UI)` (M)
+### ✅ PR3 — `app: 사장-PM 채팅 패널 (정적 UI)` (M)
+완료. 커밋 `de154a1`. Tailwind v4 + Chat/MessageBubble/MessageInput.
+
+### ✅ PR4 — `core: PTY 매니저 + ring buffer + subscribe` (M)
+완료. 커밋 `c3c9893`. `@homebridge/node-pty-prebuilt-multiarch` (정식 node-pty는 Windows native build 실패). vitest 14/14.
+
+### ✅ PR5a — `app: PM echo stub + PTY/IPC 인프라` (M)
+완료. 커밋 `e12c46f`. externalizeDepsPlugin, @core alias, contextBridge.
+
+### ✅ PR5b — `app: PM = Claude Code CLI 실제 연결` (M)
+완료. 커밋 `34cbd04`. child_process + `claude --print --verbose --input-format stream-json --output-format stream-json --include-partial-messages --session-id/--resume --permission-mode bypassPermissions`. streaming chunk 한 버블에 누적.
+
+### ✅ PR6 — `core/app: PM이 sub 세션 spawn 요청 프로토콜 + 직원 카드 UI` (M)
+완료. 커밋 `9bac44e`. chokidar v5 watcher + spawn/runner + EmployeeRoster/Card. 검증: PM이 `workspace/spawn-request/<uuid>.json` 작성 → dev-1 5~6s에 pwd 완료.
+
+### ✅ PR6.5 — `app: 하단 statusbar` (S)
+완료. 커밋 `54d451f`. project · branch · model · ctx · token · cost · 5h reset. stream-json result/rate_limit_event 파싱.
+
+---
+
+### PR3 — `app: 사장-PM 채팅 패널 (정적 UI)` (M) — *완료, 위 ✅ 참조*
 
 **완료 기준**: 앱을 켜면 화면 중앙에 채팅 패널이 있고, 하단 입력창에 메시지 치면 로컬 state에 사장 메시지가 추가되어 표시된다. PM 응답은 아직 mock.
 
@@ -137,9 +157,12 @@ PM에게 줄 시스템 프롬프트 업데이트: "sub 세션이 필요하면 `w
 
 ## 작업량 합계
 
-- 완료: 2S + 4M (PR1, PR2, PR3, PR4, PR5a, PR5b, PR6)
-- 남은: 1S (PR6.5) + 1M (PR7)
-- 합계 약 **3 S + 5 M**. 마무리 단계.
+- ✅ 완료: 3S + 5M (PR1, PR2, PR3, PR4, PR5a, PR5b, PR6, PR6.5)
+- 🟡 남은: **1M (PR7)** — 본질 시나리오 완성.
+
+## 다음 한 가지
+
+PR7 — PM이 `workspace/sessions/<id>/output.log` + `done` 마커를 read해서 사장에게 보고. 이게 들어가야 사장 → PM → dev → PM → 사장 한 사이클 완성. 자세한 시작점은 `docs/PROGRESS.md` 참조.
 
 ---
 

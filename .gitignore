@@ -50,6 +50,7 @@ secrets/
 workspace/runtime/
 workspace/sessions/
 workspace/cache/
+workspace/spawn-request/
 *.session.json
 
 # ===== Databases =====
