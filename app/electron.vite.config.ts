@@ -1,11 +1,17 @@
 import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'electron-vite';
+import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
+
+const coreDir = resolve(__dirname, '../core');
 
 export default defineConfig({
   main: {
     root: 'src/main',
+    plugins: [externalizeDepsPlugin()],
+    resolve: {
+      alias: { '@core': coreDir },
+    },
     build: {
       outDir: resolve(__dirname, 'out/main'),
       rollupOptions: {
@@ -15,6 +21,7 @@ export default defineConfig({
   },
   preload: {
     root: 'src/preload',
+    plugins: [externalizeDepsPlugin()],
     build: {
       outDir: resolve(__dirname, 'out/preload'),
       rollupOptions: {
@@ -24,6 +31,9 @@ export default defineConfig({
   },
   renderer: {
     root: 'src/renderer',
+    resolve: {
+      alias: { '@core': coreDir },
+    },
     build: {
       outDir: resolve(__dirname, 'out/renderer'),
       rollupOptions: {
