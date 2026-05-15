@@ -3,10 +3,11 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { PTYManager } from '@core/pty/manager';
 import { IPC, type PMExitPayload, type PMOutputPayload } from '../shared/ipc.js';
-import { PM_SESSION_ID, spawnPM } from './employee/spawn-pm.js';
+import { killPM, sendToPM } from './employee/pm-runner.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// PTY 매니저는 PR6의 sub 세션용. PM은 별도 stream-json child_process로.
 const ptyManager = new PTYManager();
 let mainWindow: BrowserWindow | null = null;
 
@@ -36,26 +37,28 @@ function createOffice(): void {
 }
 
 function wirePM(): void {
-  spawnPM(ptyManager);
-
-  ptyManager.subscribe(PM_SESSION_ID, (event) => {
-    if (!mainWindow) return;
-    if (event.kind === 'data') {
-      const payload: PMOutputPayload = { text: event.data };
-      mainWindow.webContents.send(IPC.pmOutput, payload);
-    } else if (event.kind === 'exit') {
-      const payload: PMExitPayload = { exitCode: event.exitCode };
-      mainWindow.webContents.send(IPC.pmExit, payload);
-    }
-  });
-
   ipcMain.handle(IPC.pmSend, (_evt, text: string) => {
-    if (!ptyManager.has(PM_SESSION_ID)) {
-      throw new Error('PM session not running');
-    }
-    // PowerShell ReadLine은 줄 단위 — 개행 보장
-    const payload = text.endsWith('\n') ? text : `${text}\n`;
-    ptyManager.write(PM_SESSION_ID, payload);
+    sendToPM(text, {
+      onChunk: (chunk) => {
+        if (!mainWindow) return;
+        const payload: PMOutputPayload = { text: chunk };
+        mainWindow.webContents.send(IPC.pmOutput, payload);
+      },
+      onError: (err) => {
+        if (!mainWindow) return;
+        const payload: PMOutputPayload = { text: `\n[claude stderr] ${err}\n` };
+        mainWindow.webContents.send(IPC.pmOutput, payload);
+      },
+      onDone: ({ exitCode, ok, reason }) => {
+        if (!mainWindow) return;
+        if (!ok && reason) {
+          const payload: PMOutputPayload = { text: `\n[PM 응답 실패: ${reason}]\n` };
+          mainWindow.webContents.send(IPC.pmOutput, payload);
+        }
+        const payload: PMExitPayload = { exitCode };
+        mainWindow.webContents.send(IPC.pmExit, payload);
+      },
+    });
   });
 }
 
@@ -78,6 +81,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  ptyManager.kill(PM_SESSION_ID);
+  killPM();
+  for (const s of ptyManager.list()) ptyManager.kill(s.id);
   if (process.platform !== 'darwin') app.quit();
 });

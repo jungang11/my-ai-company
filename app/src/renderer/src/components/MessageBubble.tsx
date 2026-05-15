@@ -25,6 +25,9 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
           }`}
         >
           {message.text}
+          {message.streaming && (
+            <span className="ml-1 inline-block h-3 w-1 animate-pulse bg-emerald-400 align-middle" />
+          )}
         </div>
       </div>
     </div>

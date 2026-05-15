@@ -1,46 +1,51 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
+import { useState } from 'react';
 import { Chat } from './components/Chat';
 import { newMessage, type ChatMessage } from './state/chat-store';
 
-const PM_BUFFER_FLUSH_MS = 120;
-
 export function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const pmBuffer = useRef<string>('');
-  const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function flushPM() {
-    const text = pmBuffer.current.trim();
-    pmBuffer.current = '';
-    flushTimer.current = null;
-    if (!text) return;
-    setMessages((prev) => [...prev, newMessage('pm', text)]);
-  }
 
   useEffect(() => {
     if (!window.api) {
-      console.error('[payroll-os] window.api 없음 — preload 로드 실패. preload 출력 경로/format 확인.');
+      console.error(
+        '[payroll-os] window.api 없음 — preload 로드 실패. preload 출력 경로/format 확인.',
+      );
       setMessages((prev) => [
         ...prev,
         newMessage('pm', '[preload 로드 실패: window.api undefined. DevTools 콘솔 참고.]'),
       ]);
       return;
     }
+
     const offData = window.api.onPMOutput(({ text }) => {
-      pmBuffer.current += text;
-      if (flushTimer.current) clearTimeout(flushTimer.current);
-      flushTimer.current = setTimeout(flushPM, PM_BUFFER_FLUSH_MS);
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.role === 'pm' && last.streaming) {
+          // 현재 streaming 중인 PM 버블에 chunk 누적
+          return [...prev.slice(0, -1), { ...last, text: last.text + text }];
+        }
+        // 새 PM 응답 시작
+        return [...prev, newMessage('pm', text, true)];
+      });
     });
+
     const offExit = window.api.onPMExit(({ exitCode }) => {
-      setMessages((prev) => [
-        ...prev,
-        newMessage('pm', `[PM 세션 종료 (exit ${exitCode})]`),
-      ]);
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (!last || last.role !== 'pm') return prev;
+        const closed: ChatMessage = {
+          ...last,
+          streaming: false,
+          ...(exitCode !== 0 ? { text: `${last.text || ''}\n[exit ${exitCode}]` } : {}),
+        };
+        return [...prev.slice(0, -1), closed];
+      });
     });
+
     return () => {
       offData();
       offExit();
-      if (flushTimer.current) clearTimeout(flushTimer.current);
     };
   }, []);
 
