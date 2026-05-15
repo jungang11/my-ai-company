@@ -1,14 +1,18 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { PTYManager } from '@core/pty/manager';
-import { IPC, type PMExitPayload, type PMOutputPayload } from '../shared/ipc.js';
+import {
+  IPC,
+  type PMExitPayload,
+  type PMOutputPayload,
+  type RosterUpdatePayload,
+} from '../shared/ipc.js';
 import { killPM, sendToPM } from './employee/pm-runner.js';
+import { killAllSubs } from './spawn/runner.js';
+import { startSpawnWatcher, stopSpawnWatcher } from './spawn/watcher.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// PTY 매니저는 PR6의 sub 세션용. PM은 별도 stream-json child_process로.
-const ptyManager = new PTYManager();
 let mainWindow: BrowserWindow | null = null;
 
 function createOffice(): void {
@@ -26,13 +30,41 @@ function createOffice(): void {
   const devUrl = process.env['ELECTRON_RENDERER_URL'];
   if (devUrl) {
     mainWindow.loadURL(devUrl);
-    mainWindow.webContents.openDevTools({ mode: 'detach' });
+    // DevTools 자동 오픈 안 함. 필요하면 Ctrl+Shift+I 또는 F12.
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+}
+
+function wireSpawnWatcher(): void {
+  startSpawnWatcher((update) => {
+    if (!mainWindow) return;
+    let payload: RosterUpdatePayload;
+    if (update.kind === 'started') {
+      payload = {
+        kind: 'started',
+        sessionId: update.sessionId,
+        employeeId: update.employee.id,
+        employeeName: update.employee.name,
+        role: update.employee.role,
+        prompt: update.prompt,
+        startedAt: update.startedAt,
+      };
+    } else if (update.kind === 'chunk') {
+      payload = { kind: 'chunk', sessionId: update.sessionId, text: update.text };
+    } else {
+      payload = {
+        kind: 'done',
+        sessionId: update.sessionId,
+        exitCode: update.exitCode,
+        endedAt: update.endedAt,
+      };
+    }
+    mainWindow.webContents.send(IPC.rosterUpdate, payload);
   });
 }
 
@@ -65,9 +97,10 @@ function wirePM(): void {
 app.whenReady().then(() => {
   createOffice();
 
-  // renderer가 준비된 뒤에 PM 출근시켜야 첫 메시지가 채팅창에 도달
+  // renderer가 준비된 뒤에 PM 출근 + sub 직원 watcher 시작
   mainWindow?.webContents.once('did-finish-load', () => {
     wirePM();
+    wireSpawnWatcher();
   });
 
   app.on('activate', () => {
@@ -75,13 +108,15 @@ app.whenReady().then(() => {
       createOffice();
       mainWindow?.webContents.once('did-finish-load', () => {
         wirePM();
+        wireSpawnWatcher();
       });
     }
   });
 });
 
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
   killPM();
-  for (const s of ptyManager.list()) ptyManager.kill(s.id);
+  killAllSubs();
+  await stopSpawnWatcher();
   if (process.platform !== 'darwin') app.quit();
 });

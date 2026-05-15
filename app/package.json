@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@homebridge/node-pty-prebuilt-multiarch": "^0.13.1",
+    "chokidar": "^5.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }

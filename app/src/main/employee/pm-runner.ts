@@ -53,9 +53,13 @@ export function sendToPM(userText: string, cb: PMCallbacks): void {
 
   // --bare는 OAuth/Keychain 인증을 차단하므로 사용 불가 (Claude Max 인증 필요).
   // --verbose는 --print + stream-json 조합의 필수 flag.
+  // --permission-mode bypassPermissions: --print 모드는 권한 prompt에 응답 불가 →
+  // Write/Bash 등 도구 사용이 막혀버림. 개인 머신/sandbox 없음 컨셉이라 bypass.
   const args = [
     '--print',
     '--verbose',
+    '--permission-mode',
+    'bypassPermissions',
     '--input-format',
     'stream-json',
     '--output-format',
