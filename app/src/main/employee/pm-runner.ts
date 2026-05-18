@@ -28,11 +28,31 @@ let confirmedSessionId: string | null = null;
 let pendingSessionId: string | null = null;
 let activeProc: ChildProcessWithoutNullStreams | null = null;
 
+/**
+ * PM이 다른 메시지에 응답 중일 때 시스템(app-originated) 메시지가 들어오면
+ * 이 큐에 쌓아두고 PM이 idle 되는 즉시 순서대로 flush.
+ * 예: sub 세션 done 신호 — PM busy면 다음 idle에 자동 read.
+ */
+const systemQueue: Array<{ text: string; cb: PMCallbacks }> = [];
+
 // 세션 누적 status — PM은 앱 lifecycle 동안 하나의 ongoing conversation.
 const pmStatus = new StatusTracker('pm');
 
 export function getPMStatusSnapshot(): StatusSnapshot {
   return pmStatus.snapshot();
+}
+
+/**
+ * app이 자동 트리거하는 시스템 메시지용 진입점. PM이 busy면 큐에 적재 후
+ * 다음 idle 시점에 자동으로 sendToPM 호출. 사장이 직접 보낸 메시지가 아님 —
+ * renderer의 사장 boss 버블은 안 만들어지고, PM 응답만 채팅창에 등장.
+ */
+export function enqueueSystemMessage(text: string, cb: PMCallbacks): void {
+  if (!activeProc) {
+    sendToPM(text, cb);
+    return;
+  }
+  systemQueue.push({ text, cb });
 }
 
 export type PMCallbacks = {
@@ -128,6 +148,12 @@ export function sendToPM(userText: string, cb: PMCallbacks): void {
     }
     if (stderrBuf.trim()) cb.onError(stderrBuf.trim());
     cb.onDone({ exitCode: code ?? -1, ok: code === 0 });
+
+    // PM이 idle 됐으니 쌓인 시스템 메시지 한 개 flush — 직렬 처리.
+    if (systemQueue.length > 0) {
+      const next = systemQueue.shift()!;
+      setTimeout(() => sendToPM(next.text, next.cb), 100);
+    }
   });
 
   const inputMsg = {

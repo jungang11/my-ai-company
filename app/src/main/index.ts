@@ -9,7 +9,7 @@ import {
   type StatusInit,
   type StatusSnapshot,
 } from '../shared/ipc.js';
-import { killPM, sendToPM } from './employee/pm-runner.js';
+import { enqueueSystemMessage, killPM, sendToPM, type PMCallbacks } from './employee/pm-runner.js';
 import { killAllSubs } from './spawn/runner.js';
 import { startSpawnWatcher, stopSpawnWatcher } from './spawn/watcher.js';
 import { getStatusInit } from './status.js';
@@ -17,6 +17,35 @@ import { getStatusInit } from './status.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null = null;
+
+// PM 응답을 renderer로 흘려보내는 콜백 집합. wirePM에서 사장의 ipcMain.handle을 통해 호출되거나,
+// wireSpawnWatcher가 sub 직원 done 시 enqueueSystemMessage로 자동 트리거할 때 동일 콜백을 재사용.
+const pmCallbacks: PMCallbacks = {
+  onChunk: (chunk) => {
+    if (!mainWindow) return;
+    const payload: PMOutputPayload = { text: chunk };
+    mainWindow.webContents.send(IPC.pmOutput, payload);
+  },
+  onError: (err) => {
+    if (!mainWindow) return;
+    const payload: PMOutputPayload = { text: `\n[claude stderr] ${err}\n` };
+    mainWindow.webContents.send(IPC.pmOutput, payload);
+  },
+  onDone: ({ exitCode, ok, reason }) => {
+    if (!mainWindow) return;
+    if (!ok && reason) {
+      const payload: PMOutputPayload = { text: `\n[PM 응답 실패: ${reason}]\n` };
+      mainWindow.webContents.send(IPC.pmOutput, payload);
+    }
+    const payload: PMExitPayload = { exitCode };
+    mainWindow.webContents.send(IPC.pmExit, payload);
+  },
+  onStatus: (snapshot) => {
+    if (!mainWindow) return;
+    const payload: StatusSnapshot = snapshot;
+    mainWindow.webContents.send(IPC.statusUpdate, payload);
+  },
+};
 
 function createOffice(): void {
   mainWindow = new BrowserWindow({
@@ -66,6 +95,18 @@ function wireSpawnWatcher(): void {
         exitCode: update.exitCode,
         endedAt: update.endedAt,
       };
+      // sub 세션이 정상 종료되면 PM에 자동 시스템 메시지 주입 — output.log 읽어 사장에게 보고.
+      // PM이 busy면 큐에 적재, idle 되면 자동 flush.
+      if (update.exitCode === 0) {
+        const sysMsg =
+          `[system 알림: sub 직원 작업 완료]\n` +
+          `sessionId: ${update.sessionId}\n` +
+          `결과 파일: workspace/sessions/${update.sessionId}/output.log\n` +
+          `done 마커: workspace/sessions/${update.sessionId}/done\n\n` +
+          `위 output.log를 Read 도구로 읽어서, 사장이 시킨 일감의 결과를 한국어로 1~3문장 요약 보고해. ` +
+          `사장이 직접 보낸 메시지가 아니라 app이 자동 주입한 신호다.`;
+        enqueueSystemMessage(sysMsg, pmCallbacks);
+      }
     }
     mainWindow.webContents.send(IPC.rosterUpdate, payload);
   });
@@ -73,32 +114,7 @@ function wireSpawnWatcher(): void {
 
 function wirePM(): void {
   ipcMain.handle(IPC.pmSend, (_evt, text: string) => {
-    sendToPM(text, {
-      onChunk: (chunk) => {
-        if (!mainWindow) return;
-        const payload: PMOutputPayload = { text: chunk };
-        mainWindow.webContents.send(IPC.pmOutput, payload);
-      },
-      onError: (err) => {
-        if (!mainWindow) return;
-        const payload: PMOutputPayload = { text: `\n[claude stderr] ${err}\n` };
-        mainWindow.webContents.send(IPC.pmOutput, payload);
-      },
-      onDone: ({ exitCode, ok, reason }) => {
-        if (!mainWindow) return;
-        if (!ok && reason) {
-          const payload: PMOutputPayload = { text: `\n[PM 응답 실패: ${reason}]\n` };
-          mainWindow.webContents.send(IPC.pmOutput, payload);
-        }
-        const payload: PMExitPayload = { exitCode };
-        mainWindow.webContents.send(IPC.pmExit, payload);
-      },
-      onStatus: (snapshot) => {
-        if (!mainWindow) return;
-        const payload: StatusSnapshot = snapshot;
-        mainWindow.webContents.send(IPC.statusUpdate, payload);
-      },
-    });
+    sendToPM(text, pmCallbacks);
   });
 
   ipcMain.handle(IPC.statusInit, () => {
