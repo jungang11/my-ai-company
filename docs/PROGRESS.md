@@ -11,9 +11,14 @@
 
 ---
 
-## 누적 commit (push 가능 단위, origin 보다 20+ ahead)
+## 누적 commit (push 가능 단위, origin 보다 26+ ahead)
 
 ```
+d02accd app: UX polish — 회의 prefix hint + timestamp + 5h amber
+25f8c3e docs: Phase 3 plan 갱신
+cab0aa5 app: 직원 명부 누적 spawn/tokens (Phase 3 PR5 minimal)
+06152cf core+app: sub session 영속화 + historical 복원 (Phase 3 PR6)
+7f0ad9f docs: PROGRESS.md 최종 sync
 477fd48 docs: Phase 2 시연 통과 docs sync (models.md/phase2-plan.md)
 3a73d7f app: sub session 카드 시각화 (Task tool 이벤트 캡처) + UX
 3c97140 core+app: Task tool 패턴 도입 + UX 안정화 (Phase 2 fix 라운드)
@@ -97,26 +102,25 @@ origin은 `85556a7`까지 push 됨. **회사 GitHub Desktop 로그인이라 pers
 
 ## 남은 라운드 후보 (사장 결정 안건)
 
-### A. Phase 3 진입 (다양화)
-`docs/phase3-plan.md` draft 작성됨. 6 PR 분해:
-- PR1 다중 CLI 백엔드 추상화
-- PR2 dev-codex (OpenAI Codex CLI)
-- PR3 dev-gemini (Google Gemini CLI)
-- PR4 Figma MCP + designer-1 직군
-- PR5 직원별 누적 사용량/비용 그래프 (UsagePanel)
-- PR6 workspace/sessions 영속 read (PR2.5 흡수)
+### A. Phase 3 부분 진행 (사장 결정 2026-05-18)
+- ❌ PR1 다중 CLI 백엔드 / PR2 Codex / PR3 Gemini / PR4 Figma MCP — 모두 보류.
+- ✅ PR6 workspace/sessions 영속 read (`06152cf`).
+- ✅ PR5 minimal 직원 명부 row 누적 표시 (`cab0aa5`).
+- UsagePanel 풀버전 (직원별 cost 그래프) — 명부 row inline으로 충분이라 판단, 별도 안 만듦.
 
-사장 결정 안건 4개 §끝.
+### B. UX polish (`d02accd`)
+- 회의: prefix 안내 hint (입력창 placeholder)
+- 메시지 timestamp (HH:mm)
+- 5h reset 임박(<30분) 시 amber 강조
 
-### B. Phase 2 잔여 polish
-- workspace/sessions 영속 read (Phase 3 PR6 당김)
-- UsagePanel (Phase 3 PR5 당김)
-- 토큰 최적화 2차
+### C. 시연 시나리오 확장 (사장 검증 필요)
+- "회의:" prefix → PM 동시 다수 spawn
+- 어려운 일감 → dev-arch에 위임
+- 문서 일감 → planner-1에 위임
+- 직원 토글 → utility-1 비활성 후 단순 일감 흐름 변화
 
-### C. 시연 시나리오 확장
-- "회의:" prefix 시연
-- 동시 다중 spawn (병렬 작업) 시연
-- 직원 토글 시연
+### D. 토큰 최적화 2차 (현재 cache 99% 이미 좋음 — 보류)
+cache_creation이 매 turn 1k 미만으로 안정. 추가 최적화 가치 미미. 새 보강 시점 도래 시 재검토.
 
 ---
 
