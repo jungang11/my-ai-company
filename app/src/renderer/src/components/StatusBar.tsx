@@ -42,9 +42,15 @@ function rateLimitChip(info: RateLimitInfo) {
 }
 
 export function StatusBar({ init, status }: Props) {
+  // ctx = 마지막 turn에서 PM이 실제 사용한 context window 점유분.
+  // = fresh input + cache read (이전 turn 누적이 cache로 hit) + cache creation (새 cache).
+  // 1M 한도 대비 몇 % 차지하고 있는지 사장이 한 turn 기준으로 보고 싶어함.
+  const lastTurnCtx = status
+    ? status.lastInputTokens + status.lastCacheReadTokens + status.lastCacheCreationTokens
+    : 0;
   const ctxPct =
     status && status.contextWindow > 0
-      ? Math.round((status.totalInputTokens / status.contextWindow) * 100)
+      ? Math.round((lastTurnCtx / status.contextWindow) * 100)
       : 0;
 
   // cache hit rate: cache_read / (cache_read + fresh_input + cache_creation).
@@ -72,13 +78,13 @@ export function StatusBar({ init, status }: Props) {
       </span>
 
       <span className="ml-auto flex items-center gap-3">
-        <span>
+        <span title="마지막 turn의 context 점유: fresh input + cache read + cache creation">
           <span className="text-slate-500">ctx</span>{' '}
-          {status ? `${formatTokens(status.totalInputTokens)} / ${formatTokens(status.contextWindow)}` : '0 / ?'}{' '}
+          {status ? `${formatTokens(lastTurnCtx)} / ${formatTokens(status.contextWindow)}` : '0 / ?'}{' '}
           <span className="text-slate-500">({ctxPct}%)</span>
         </span>
-        <span>
-          <span className="text-slate-500">tok</span>{' '}
+        <span title="세션 누적 — fresh input + cache creation은 매 turn 새로 청구, output은 매 turn 새로 생성">
+          <span className="text-slate-500">tok 누적</span>{' '}
           {status
             ? `↑${formatTokens(status.totalInputTokens)} ↓${formatTokens(status.totalOutputTokens)}`
             : '↑0 ↓0'}

@@ -91,11 +91,34 @@ export function enqueueSystemMessage(text: string, cb: PMCallbacks): void {
   systemQueue.push({ text, cb });
 }
 
+export type SubAgentStarted = {
+  taskId: string;
+  subagentType: string;
+  prompt: string;
+  description?: string;
+  startedAt: number;
+};
+
+export type SubAgentDone = {
+  taskId: string;
+  subagentType: string;
+  output: string;
+  totalTokens: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  totalDurationMs: number;
+  endedAt: number;
+};
+
 export type PMCallbacks = {
   onChunk: (text: string) => void;
   onDone: (info: { exitCode: number; ok: boolean; reason?: string }) => void;
   onError: (err: string) => void;
   onStatus: (snapshot: StatusSnapshot) => void;
+  onSubAgentStarted: (info: SubAgentStarted) => void;
+  onSubAgentDone: (info: SubAgentDone) => void;
 };
 
 function nextSessionArgs(): string[] {
@@ -240,6 +263,50 @@ function handleStreamLine(line: string, cb: PMCallbacks): void {
 
   // status 누적 (model, tokens, cost, rate limit)
   pmStatus.ingest(e);
+
+  // Task tool sub-agent lifecycle — claude가 dedicated 이벤트로 emit
+  if (e['type'] === 'system' && e['subtype'] === 'task_started') {
+    cb.onSubAgentStarted({
+      taskId: String(e['task_id'] ?? ''),
+      subagentType: String(e['subagent_type'] ?? ''),
+      prompt: String(e['prompt'] ?? ''),
+      description: typeof e['description'] === 'string' ? e['description'] : undefined,
+      startedAt: Date.now(),
+    });
+    return;
+  }
+
+  if (e['type'] === 'user' && e['tool_use_result']) {
+    const tur = e['tool_use_result'] as Record<string, unknown>;
+    if (tur['status'] === 'completed') {
+      const contents = (tur['content'] as Array<Record<string, unknown>> | undefined) ?? [];
+      const text = contents
+        .filter((c) => c['type'] === 'text' && typeof c['text'] === 'string')
+        .map((c) => c['text'] as string)
+        .join('\n');
+      const usage = (tur['usage'] as Record<string, unknown> | undefined) ?? {};
+      cb.onSubAgentDone({
+        taskId: String(tur['agentId'] ?? ''),
+        subagentType: String(tur['agentType'] ?? ''),
+        output: text,
+        totalTokens: typeof tur['totalTokens'] === 'number' ? (tur['totalTokens'] as number) : 0,
+        inputTokens: typeof usage['input_tokens'] === 'number' ? (usage['input_tokens'] as number) : 0,
+        outputTokens: typeof usage['output_tokens'] === 'number' ? (usage['output_tokens'] as number) : 0,
+        cacheCreationTokens:
+          typeof usage['cache_creation_input_tokens'] === 'number'
+            ? (usage['cache_creation_input_tokens'] as number)
+            : 0,
+        cacheReadTokens:
+          typeof usage['cache_read_input_tokens'] === 'number'
+            ? (usage['cache_read_input_tokens'] as number)
+            : 0,
+        totalDurationMs:
+          typeof tur['totalDurationMs'] === 'number' ? (tur['totalDurationMs'] as number) : 0,
+        endedAt: Date.now(),
+      });
+      return;
+    }
+  }
 
   // partial text chunks (--include-partial-messages)
   if (e['type'] === 'stream_event') {

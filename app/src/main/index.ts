@@ -11,7 +11,7 @@ import {
   type StatusSnapshot,
 } from '../shared/ipc.js';
 import { enqueueSystemMessage, killPM, sendToPM, type PMCallbacks } from './employee/pm-runner.js';
-import { listEmployees, setActive, toPublic } from './employee/manager.js';
+import { getEmployee, listEmployees, setActive, toPublic } from './employee/manager.js';
 import { killAllSubs } from './spawn/runner.js';
 import { startSpawnWatcher, stopSpawnWatcher } from './spawn/watcher.js';
 import { getStatusInit } from './status.js';
@@ -46,6 +46,46 @@ const pmCallbacks: PMCallbacks = {
     if (!mainWindow) return;
     const payload: StatusSnapshot = snapshot;
     mainWindow.webContents.send(IPC.statusUpdate, payload);
+  },
+  onSubAgentStarted: (info) => {
+    if (!mainWindow) return;
+    const emp = getEmployee(info.subagentType);
+    const payload: RosterUpdatePayload = {
+      kind: 'started',
+      sessionId: info.taskId,
+      employeeId: info.subagentType,
+      employeeName: emp?.name ?? info.subagentType,
+      role: emp?.role ?? '?',
+      prompt: info.prompt,
+      startedAt: info.startedAt,
+      ...(emp?.model ? { model: emp.model } : {}),
+    };
+    mainWindow.webContents.send(IPC.rosterUpdate, payload);
+  },
+  onSubAgentDone: (info) => {
+    if (!mainWindow) return;
+    // 1) output 전체를 한 chunk로 먼저 보냄 (카드 미리보기 + 모달에 표시)
+    const chunkPayload: RosterUpdatePayload = {
+      kind: 'chunk',
+      sessionId: info.taskId,
+      text: info.output,
+    };
+    mainWindow.webContents.send(IPC.rosterUpdate, chunkPayload);
+    // 2) done emit (metrics 포함)
+    const donePayload: RosterUpdatePayload = {
+      kind: 'done',
+      sessionId: info.taskId,
+      exitCode: 0,
+      endedAt: info.endedAt,
+      metrics: {
+        inputTokens: info.inputTokens,
+        outputTokens: info.outputTokens,
+        cacheReadTokens: info.cacheReadTokens,
+        cacheCreationTokens: info.cacheCreationTokens,
+        costUsd: 0,
+      },
+    };
+    mainWindow.webContents.send(IPC.rosterUpdate, donePayload);
   },
 };
 
