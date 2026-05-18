@@ -1,6 +1,6 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { StatusTracker } from '../status.js';
@@ -13,11 +13,65 @@ type PMDef = {
   name: string;
   role: string;
   systemPrompt: string;
+  model?: string;
+  effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 };
 
-const PM_DEF_PATH = resolve(__dirname, '../../../core/employees/pm.json');
-const pmDef = JSON.parse(readFileSync(PM_DEF_PATH, 'utf-8')) as PMDef;
+type EmployeeCatalogEntry = {
+  id: string;
+  name: string;
+  role: string;
+  model?: string;
+  effort?: string;
+  shortDescription?: string;
+};
+
 const projectRoot = resolve(__dirname, '../../..');
+const PM_DEF_PATH = resolve(projectRoot, 'core/employees/pm.json');
+const EMPLOYEES_DIR = resolve(projectRoot, 'core/employees');
+
+/**
+ * PM 정의를 매 호출마다 read해서 시스템 프롬프트 튜닝 시 dev 재시작 없이 반영.
+ */
+function loadPMDef(): PMDef {
+  return JSON.parse(readFileSync(PM_DEF_PATH, 'utf-8')) as PMDef;
+}
+
+/**
+ * pm.json 제외한 모든 core/employees/*.json을 읽어 PM에게 보여줄 카탈로그 문자열을 만든다.
+ * 사장이 직원 JSON 추가/수정하면 PM이 다음 spawn에서 자동 인지.
+ */
+function loadCatalog(): string {
+  const files = readdirSync(EMPLOYEES_DIR).filter(
+    (f) => f.endsWith('.json') && f !== 'pm.json',
+  );
+  const entries: EmployeeCatalogEntry[] = files
+    .map((f) => {
+      try {
+        return JSON.parse(readFileSync(resolve(EMPLOYEES_DIR, f), 'utf-8')) as EmployeeCatalogEntry;
+      } catch {
+        return null;
+      }
+    })
+    .filter((x): x is EmployeeCatalogEntry => x !== null);
+
+  if (entries.length === 0) return '';
+
+  const lines = entries.map((e) => {
+    const head = `- **${e.id}** (${e.name}, ${e.role}` + (e.model ? `, ${e.model}` : '') + (e.effort ? `, effort=${e.effort}` : '') + ')';
+    const desc = e.shortDescription ? `\n  ${e.shortDescription}` : '';
+    return head + desc;
+  });
+
+  return [
+    '',
+    '=== 현재 회사 직원 명부 (자동 생성) ===',
+    '아래 직원 중 일감에 적합한 한 명 또는 여러 명을 골라 spawn-request로 위임.',
+    '자세한 시스템 프롬프트는 `core/employees/<id>.json` Read.',
+    '',
+    ...lines,
+  ].join('\n');
+}
 
 /**
  * 첫 호출은 `--session-id <new-uuid>`로 새 세션 생성, 이후는 `--resume <id>`로 재개.
@@ -81,6 +135,13 @@ export function sendToPM(userText: string, cb: PMCallbacks): void {
     return;
   }
 
+  // 매 호출마다 PM 정의와 직원 카탈로그를 fresh하게 read — JSON 튜닝 시 dev 재시작 불필요.
+  const pmDef = loadPMDef();
+  const catalog = loadCatalog();
+  const composedSystemPrompt = catalog
+    ? `${pmDef.systemPrompt}\n${catalog}`
+    : pmDef.systemPrompt;
+
   // --bare는 OAuth/Keychain 인증을 차단하므로 사용 불가 (Claude Max 인증 필요).
   // --verbose는 --print + stream-json 조합의 필수 flag.
   // --permission-mode bypassPermissions: --print 모드는 권한 prompt에 응답 불가 →
@@ -97,10 +158,16 @@ export function sendToPM(userText: string, cb: PMCallbacks): void {
     '--include-partial-messages',
     ...nextSessionArgs(),
     '--append-system-prompt',
-    pmDef.systemPrompt,
+    composedSystemPrompt,
     '--add-dir',
     projectRoot,
   ];
+  if (pmDef.model) {
+    args.push('--model', pmDef.model);
+  }
+  if (pmDef.effort) {
+    args.push('--effort', pmDef.effort);
+  }
 
   // Windows에서 .exe 자동 해석 위해 shell:true 사용 (`where claude` → claude.exe)
   const proc = spawn('claude', args, {
