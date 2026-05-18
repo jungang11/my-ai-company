@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
   IPC,
+  type EmployeeProfile,
   type PMExitPayload,
   type PMOutputPayload,
   type RosterUpdatePayload,
@@ -10,6 +11,7 @@ import {
   type StatusSnapshot,
 } from '../shared/ipc.js';
 import { enqueueSystemMessage, killPM, sendToPM, type PMCallbacks } from './employee/pm-runner.js';
+import { listEmployees, setActive, toPublic } from './employee/manager.js';
 import { killAllSubs } from './spawn/runner.js';
 import { startSpawnWatcher, stopSpawnWatcher } from './spawn/watcher.js';
 import { getStatusInit } from './status.js';
@@ -123,6 +125,29 @@ function wirePM(): void {
   });
 }
 
+function wireEmployeeRegistry(): void {
+  ipcMain.handle(IPC.employeeList, (): EmployeeProfile[] => {
+    return listEmployees().map(toPublic);
+  });
+
+  ipcMain.handle(
+    IPC.employeeToggle,
+    (_evt, id: string, active: boolean): EmployeeProfile | null => {
+      try {
+        const updated = setActive(id, active);
+        if (!updated) return null;
+        const publicProfile = toPublic(updated);
+        // 다른 창/리스너 알림 (현재는 단일 창이지만 future-proof)
+        mainWindow?.webContents.send(IPC.employeeChanged, publicProfile);
+        return publicProfile;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(msg);
+      }
+    },
+  );
+}
+
 app.whenReady().then(() => {
   createOffice();
 
@@ -130,6 +155,7 @@ app.whenReady().then(() => {
   mainWindow?.webContents.once('did-finish-load', () => {
     wirePM();
     wireSpawnWatcher();
+    wireEmployeeRegistry();
   });
 
   app.on('activate', () => {
@@ -138,6 +164,7 @@ app.whenReady().then(() => {
       mainWindow?.webContents.once('did-finish-load', () => {
         wirePM();
         wireSpawnWatcher();
+        wireEmployeeRegistry();
       });
     }
   });

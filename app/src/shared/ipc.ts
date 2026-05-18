@@ -5,7 +5,23 @@ export const IPC = {
   rosterUpdate: 'roster:update',
   statusUpdate: 'status:update',
   statusInit: 'status:init',
+  employeeList: 'employee:list',
+  employeeToggle: 'employee:toggle',
+  employeeChanged: 'employee:changed',
 } as const;
+
+export type EmployeeEffort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+
+export type EmployeeProfile = {
+  id: string;
+  name: string;
+  role: string;
+  cliBackend: string;
+  model?: string;
+  effort?: EmployeeEffort;
+  shortDescription?: string;
+  active: boolean;
+};
 
 export type StatusInit = {
   projectName: string;

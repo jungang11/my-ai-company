@@ -4,13 +4,14 @@ import { EmployeeRoster } from './components/EmployeeRoster';
 import { StatusBar } from './components/StatusBar';
 import { newMessage, type ChatMessage } from './state/chat-store';
 import type { EmployeeRow } from './state/employee-store';
-import type { StatusInit, StatusSnapshot } from '../../shared/ipc';
+import type { EmployeeProfile, StatusInit, StatusSnapshot } from '../../shared/ipc';
 
 export function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [roster, setRoster] = useState<EmployeeRow[]>([]);
   const [statusInit, setStatusInit] = useState<StatusInit | null>(null);
   const [status, setStatus] = useState<StatusSnapshot | null>(null);
+  const [profiles, setProfiles] = useState<EmployeeProfile[]>([]);
 
   useEffect(() => {
     if (!window.api) {
@@ -25,8 +26,14 @@ export function App() {
     window.api.fetchStatusInit().then(setStatusInit).catch((err) => {
       console.error('[payroll-os] fetchStatusInit failed:', err);
     });
+    window.api.fetchEmployees().then(setProfiles).catch((err) => {
+      console.error('[payroll-os] fetchEmployees failed:', err);
+    });
 
     const offStatus = window.api.onStatus((snap) => setStatus(snap));
+    const offEmployeeChanged = window.api.onEmployeeChanged((updated) => {
+      setProfiles((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    });
 
     const offData = window.api.onPMOutput(({ text }) => {
       setMessages((prev) => {
@@ -90,8 +97,18 @@ export function App() {
       offExit();
       offRoster();
       offStatus();
+      offEmployeeChanged();
     };
   }, []);
+
+  async function handleToggle(id: string, next: boolean) {
+    try {
+      await window.api.toggleEmployee(id, next);
+      // onEmployeeChanged 이벤트가 set 처리
+    } catch (err) {
+      console.error('[payroll-os] toggleEmployee failed:', err);
+    }
+  }
 
   async function send(text: string) {
     // PM 응답이 도착할 때까지 빈 placeholder 버블(streaming=true)을 미리 띄워
@@ -112,7 +129,7 @@ export function App() {
   return (
     <main className="flex h-full flex-col bg-slate-900">
       <div className="flex flex-1 overflow-hidden">
-        <EmployeeRoster rows={roster} />
+        <EmployeeRoster rows={roster} profiles={profiles} onToggle={handleToggle} />
         <div className="flex flex-1 flex-col ring-1 ring-slate-800">
           <Chat messages={messages} onSend={send} />
         </div>

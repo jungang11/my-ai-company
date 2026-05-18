@@ -1,24 +1,22 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { EmployeeEffort, EmployeeProfile as PublicProfile } from '../../shared/ipc.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '../../..');
 const EMPLOYEES_DIR = resolve(projectRoot, 'core/employees');
 
-export type EmployeeEffort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+export type { EmployeeEffort };
 
-export type EmployeeProfile = {
-  id: string;
-  name: string;
-  role: string;
-  cliBackend: string;
-  model?: string;
-  effort?: EmployeeEffort;
-  shortDescription?: string;
-  systemPrompt: string;
-  active: boolean;
-};
+/** 내부 full profile — systemPrompt 포함. renderer에 보낼 땐 toPublic(). */
+export type EmployeeProfile = PublicProfile & { systemPrompt: string };
+
+export function toPublic(p: EmployeeProfile): PublicProfile {
+  const { systemPrompt: _omit, ...rest } = p;
+  void _omit;
+  return rest;
+}
 
 /**
  * core/employees/*.json 전부를 결정적 순서로 read. prompt cache hit 보존을 위해

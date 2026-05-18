@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import {
   IPC,
+  type EmployeeProfile,
   type PMExitPayload,
   type PMOutputPayload,
   type RosterUpdatePayload,
@@ -31,6 +32,14 @@ const api = {
     return () => ipcRenderer.off(IPC.statusUpdate, handler);
   },
   fetchStatusInit: (): Promise<StatusInit> => ipcRenderer.invoke(IPC.statusInit),
+  fetchEmployees: (): Promise<EmployeeProfile[]> => ipcRenderer.invoke(IPC.employeeList),
+  toggleEmployee: (id: string, active: boolean): Promise<EmployeeProfile | null> =>
+    ipcRenderer.invoke(IPC.employeeToggle, id, active),
+  onEmployeeChanged: (cb: (p: EmployeeProfile) => void): (() => void) => {
+    const handler = (_evt: IpcRendererEvent, payload: EmployeeProfile) => cb(payload);
+    ipcRenderer.on(IPC.employeeChanged, handler);
+    return () => ipcRenderer.off(IPC.employeeChanged, handler);
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);
