@@ -1,11 +1,63 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { Chat } from './components/Chat';
 import { EmployeeRoster } from './components/EmployeeRoster';
 import { StatusBar } from './components/StatusBar';
 import { SubSessionDetail } from './components/SubSessionDetail';
 import { newMessage, type ChatMessage } from './state/chat-store';
 import type { EmployeeRow } from './state/employee-store';
-import type { EmployeeProfile, StatusInit, StatusSnapshot } from '../../shared/ipc';
+import type {
+  EmployeeProfile,
+  RosterUpdatePayload,
+  StatusInit,
+  StatusSnapshot,
+} from '../../shared/ipc';
+
+/**
+ * 한 RosterUpdatePayload(started/chunk/done)를 roster state에 반영.
+ * 실시간 onRosterUpdate와 앱 시작 historical 복원이 같은 reducer 재사용.
+ */
+function applyRosterUpdate(
+  setRoster: Dispatch<SetStateAction<EmployeeRow[]>>,
+  update: RosterUpdatePayload,
+): void {
+  setRoster((prev) => {
+    if (update.kind === 'started') {
+      // 이미 있는 sessionId면 (historical 중복 등) 갱신만.
+      const idx = prev.findIndex((r) => r.sessionId === update.sessionId);
+      if (idx >= 0) return prev;
+      const row: EmployeeRow = {
+        sessionId: update.sessionId,
+        employeeId: update.employeeId,
+        name: update.employeeName,
+        role: update.role,
+        prompt: update.prompt,
+        status: 'working',
+        startedAt: update.startedAt,
+        output: '',
+        ...(update.model ? { model: update.model } : {}),
+      };
+      return [...prev, row];
+    }
+    if (update.kind === 'chunk') {
+      return prev.map((r) =>
+        r.sessionId === update.sessionId ? { ...r, output: r.output + update.text } : r,
+      );
+    }
+    // done
+    return prev.map((r) =>
+      r.sessionId === update.sessionId
+        ? {
+            ...r,
+            status: update.exitCode === 0 ? 'done' : 'failed',
+            endedAt: update.endedAt,
+            exitCode: update.exitCode,
+            metrics: update.metrics,
+            ...(r.model ? {} : update.metrics.model ? { model: update.metrics.model } : {}),
+          }
+        : r,
+    );
+  });
+}
 
 export function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -32,6 +84,17 @@ export function App() {
     window.api.fetchEmployees().then(setProfiles).catch((err) => {
       console.error('[payroll-os] fetchEmployees failed:', err);
     });
+    // 앱 시작 시 workspace/sessions의 done 마커 있는 과거 세션을 historical 카드로 복원.
+    window.api
+      .fetchHistoricalRoster()
+      .then((payloads) => {
+        for (const p of payloads) {
+          applyRosterUpdate(setRoster, p);
+        }
+      })
+      .catch((err) => {
+        console.error('[payroll-os] fetchHistoricalRoster failed:', err);
+      });
 
     const offStatus = window.api.onStatus((snap) => setStatus(snap));
     const offEmployeeChanged = window.api.onEmployeeChanged((updated) => {
@@ -64,41 +127,7 @@ export function App() {
     });
 
     const offRoster = window.api.onRosterUpdate((update) => {
-      setRoster((prev) => {
-        if (update.kind === 'started') {
-          const row: EmployeeRow = {
-            sessionId: update.sessionId,
-            employeeId: update.employeeId,
-            name: update.employeeName,
-            role: update.role,
-            prompt: update.prompt,
-            status: 'working',
-            startedAt: update.startedAt,
-            output: '',
-            ...(update.model ? { model: update.model } : {}),
-          };
-          return [...prev, row];
-        }
-        if (update.kind === 'chunk') {
-          return prev.map((r) =>
-            r.sessionId === update.sessionId ? { ...r, output: r.output + update.text } : r,
-          );
-        }
-        // done
-        return prev.map((r) =>
-          r.sessionId === update.sessionId
-            ? {
-                ...r,
-                status: update.exitCode === 0 ? 'done' : 'failed',
-                endedAt: update.endedAt,
-                exitCode: update.exitCode,
-                metrics: update.metrics,
-                // started 시점에 model 미상이었다면 done의 metrics.model로 채움
-                ...(r.model ? {} : update.metrics.model ? { model: update.metrics.model } : {}),
-              }
-            : r,
-        );
-      });
+      applyRosterUpdate(setRoster, update);
     });
 
     return () => {

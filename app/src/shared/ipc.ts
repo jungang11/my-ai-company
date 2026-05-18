@@ -8,6 +8,7 @@ export const IPC = {
   employeeList: 'employee:list',
   employeeToggle: 'employee:toggle',
   employeeChanged: 'employee:changed',
+  rosterHistorical: 'roster:historical',
 } as const;
 
 export type EmployeeEffort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';

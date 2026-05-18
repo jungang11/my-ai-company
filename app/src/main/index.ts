@@ -12,6 +12,7 @@ import {
 } from '../shared/ipc.js';
 import { enqueueSystemMessage, killPM, sendToPM, type PMCallbacks } from './employee/pm-runner.js';
 import { getEmployee, listEmployees, setActive, toPublic } from './employee/manager.js';
+import { loadHistoricalSessions, persistSubSession } from './sessions/historical.js';
 import { killAllSubs } from './spawn/runner.js';
 import { startSpawnWatcher, stopSpawnWatcher } from './spawn/watcher.js';
 import { getStatusInit } from './status.js';
@@ -48,6 +49,12 @@ const pmCallbacks: PMCallbacks = {
     mainWindow.webContents.send(IPC.statusUpdate, payload);
   },
   onSubAgentStarted: (info) => {
+    // started 시점에 startedAt 별도 보관 — persist 시 사용.
+    pendingSubStarts.set(info.taskId, {
+      employeeId: info.subagentType,
+      prompt: info.prompt,
+      startedAt: info.startedAt,
+    });
     if (!mainWindow) return;
     const emp = getEmployee(info.subagentType);
     const payload: RosterUpdatePayload = {
@@ -63,6 +70,37 @@ const pmCallbacks: PMCallbacks = {
     mainWindow.webContents.send(IPC.rosterUpdate, payload);
   },
   onSubAgentDone: (info) => {
+    const metrics = {
+      inputTokens: info.inputTokens,
+      outputTokens: info.outputTokens,
+      cacheReadTokens: info.cacheReadTokens,
+      cacheCreationTokens: info.cacheCreationTokens,
+      costUsd: 0,
+    };
+
+    // 영속화 (앱 재시작 후 historical 복원용)
+    const pending = pendingSubStarts.get(info.taskId);
+    if (pending) {
+      pendingSubStarts.delete(info.taskId);
+      const emp = getEmployee(info.subagentType);
+      try {
+        persistSubSession({
+          sessionId: info.taskId,
+          employeeId: info.subagentType,
+          employeeName: emp?.name ?? info.subagentType,
+          role: emp?.role ?? '?',
+          prompt: pending.prompt,
+          output: info.output,
+          metrics,
+          startedAt: pending.startedAt,
+          endedAt: info.endedAt,
+          exitCode: 0,
+        });
+      } catch (err) {
+        console.warn('[sessions] persist 실패:', err);
+      }
+    }
+
     if (!mainWindow) return;
     // 1) output 전체를 한 chunk로 먼저 보냄 (카드 미리보기 + 모달에 표시)
     const chunkPayload: RosterUpdatePayload = {
@@ -77,17 +115,17 @@ const pmCallbacks: PMCallbacks = {
       sessionId: info.taskId,
       exitCode: 0,
       endedAt: info.endedAt,
-      metrics: {
-        inputTokens: info.inputTokens,
-        outputTokens: info.outputTokens,
-        cacheReadTokens: info.cacheReadTokens,
-        cacheCreationTokens: info.cacheCreationTokens,
-        costUsd: 0,
-      },
+      metrics,
     };
     mainWindow.webContents.send(IPC.rosterUpdate, donePayload);
   },
 };
+
+/** Task tool sub-agent의 started~done 사이 메타데이터 보관 — done 시 persist에 사용. */
+const pendingSubStarts = new Map<
+  string,
+  { employeeId: string; prompt: string; startedAt: number }
+>();
 
 function createOffice(): void {
   mainWindow = new BrowserWindow({
@@ -171,6 +209,10 @@ function wirePM(): void {
 }
 
 function wireEmployeeRegistry(): void {
+  ipcMain.handle(IPC.rosterHistorical, (): RosterUpdatePayload[] => {
+    return loadHistoricalSessions();
+  });
+
   ipcMain.handle(IPC.employeeList, (): EmployeeProfile[] => {
     return listEmployees().map(toPublic);
   });

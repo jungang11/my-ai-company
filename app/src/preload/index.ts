@@ -26,6 +26,8 @@ const api = {
     ipcRenderer.on(IPC.rosterUpdate, handler);
     return () => ipcRenderer.off(IPC.rosterUpdate, handler);
   },
+  fetchHistoricalRoster: (): Promise<RosterUpdatePayload[]> =>
+    ipcRenderer.invoke(IPC.rosterHistorical),
   onStatus: (cb: (p: StatusSnapshot) => void): (() => void) => {
     const handler = (_evt: IpcRendererEvent, payload: StatusSnapshot) => cb(payload);
     ipcRenderer.on(IPC.statusUpdate, handler);
