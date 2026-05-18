@@ -19,6 +19,9 @@ type EmployeeDef = {
   role: string;
   systemPrompt: string;
   cliBackend: string;
+  model?: string;
+  effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+  shortDescription?: string;
 };
 
 export type SubSessionUpdate =
@@ -71,6 +74,12 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
     '--add-dir',
     projectRoot,
   ];
+  if (employee.model) {
+    args.push('--model', employee.model);
+  }
+  if (employee.effort) {
+    args.push('--effort', employee.effort);
+  }
 
   const proc = spawn('claude', args, {
     cwd: projectRoot,
