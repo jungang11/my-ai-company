@@ -99,15 +99,18 @@ function wireSpawnWatcher(): void {
         endedAt: update.endedAt,
         metrics: update.metrics,
       };
-      // sub 세션이 정상 종료되면 PM에 자동 시스템 메시지 주입 — output.log 읽어 사장에게 보고.
+      // sub 세션이 정상 종료되면 PM에 자동 시스템 메시지 주입 — 결과를 inline으로 포함.
+      // PM은 Read 도구를 가지지 않아도 결과를 받음 (도구 차단 + 강제 spawn 패턴).
       // PM이 busy면 큐에 적재, idle 되면 자동 flush.
       if (update.exitCode === 0) {
+        const employeeLabel = `${update.employee.name} (${update.employee.id}, ${update.employee.role})`;
         const sysMsg =
           `[system 알림: sub 직원 작업 완료]\n` +
+          `직원: ${employeeLabel}\n` +
           `sessionId: ${update.sessionId}\n` +
-          `결과 파일: workspace/sessions/${update.sessionId}/output.log\n` +
-          `done 마커: workspace/sessions/${update.sessionId}/done\n\n` +
-          `위 output.log를 Read 도구로 읽어서, 사장이 시킨 일감의 결과를 한국어로 1~3문장 요약 보고해. ` +
+          `일감: ${update.prompt}\n\n` +
+          `=== 결과 ===\n${update.output.trim() || '(빈 응답)'}\n=== 결과 끝 ===\n\n` +
+          `위 결과를 사장이 처음 시킨 일감 맥락에 맞춰 1~3문장으로 요약해 \"사장님, ${update.employee.name} 작업 결과: ...\" 식으로 채팅창에 보고해. ` +
           `사장이 직접 보낸 메시지가 아니라 app이 자동 주입한 신호다.`;
         enqueueSystemMessage(sysMsg, pmCallbacks);
       }

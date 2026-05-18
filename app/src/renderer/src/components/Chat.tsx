@@ -6,14 +6,15 @@ import { MessageInput } from './MessageInput';
 type Props = {
   messages: ChatMessage[];
   onSend: (text: string) => void;
+  pending?: boolean;
 };
 
-export function Chat({ messages, onSend }: Props) {
+export function Chat({ messages, onSend, pending }: Props) {
   const tail = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     tail.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+  }, [messages.length, pending]);
 
   return (
     <div className="flex h-full flex-col">
@@ -29,6 +30,12 @@ export function Chat({ messages, onSend }: Props) {
           </div>
         ) : (
           messages.map((m) => <MessageBubble key={m.id} message={m} />)
+        )}
+        {pending && (
+          <div className="flex items-center gap-2 rounded-lg bg-slate-800/60 px-3 py-2 text-xs text-slate-300 ring-1 ring-slate-700">
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+            PM 응답 준비 중… (cold start 5~10초, 그 뒤 streaming)
+          </div>
         )}
         <div ref={tail} />
       </div>

@@ -28,7 +28,13 @@ type EmployeeDef = {
 };
 
 export type SubSessionUpdate =
-  | { kind: 'started'; sessionId: string; employee: EmployeeDef; prompt: string; startedAt: number }
+  | {
+      kind: 'started';
+      sessionId: string;
+      employee: EmployeeDef;
+      prompt: string;
+      startedAt: number;
+    }
   | { kind: 'chunk'; sessionId: string; text: string }
   | {
       kind: 'done';
@@ -36,6 +42,10 @@ export type SubSessionUpdate =
       exitCode: number;
       endedAt: number;
       metrics: SubSessionMetrics;
+      employee: EmployeeDef;
+      prompt: string;
+      /** 누적된 sub 응답 텍스트 (사장 PM에게 inline 주입용) */
+      output: string;
     };
 
 export type SubSessionCallback = (update: SubSessionUpdate) => void;
@@ -104,6 +114,7 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
   }) as ChildProcessWithoutNullStreams;
 
   const tracker = new StatusTracker(`sub-${req.id}`);
+  let accumulatedOutput = '';
   active.set(req.id, proc);
 
   cb({
@@ -123,7 +134,8 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
       const line = stdoutBuf.slice(0, nl).trim();
       stdoutBuf = stdoutBuf.slice(nl + 1);
       if (!line) continue;
-      handleLine(line, req.id, outputPath, cb, tracker);
+      const text = handleLine(line, req.id, outputPath, cb, tracker);
+      if (text) accumulatedOutput += text;
     }
   });
 
@@ -138,7 +150,8 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
 
   proc.on('exit', (code) => {
     if (stdoutBuf.trim()) {
-      handleLine(stdoutBuf.trim(), req.id, outputPath, cb, tracker);
+      const tailText = handleLine(stdoutBuf.trim(), req.id, outputPath, cb, tracker);
+      if (tailText) accumulatedOutput += tailText;
       stdoutBuf = '';
     }
     active.delete(req.id);
@@ -157,7 +170,16 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
       JSON.stringify({ exitCode, endedAt: new Date().toISOString(), metrics }, null, 2),
       'utf-8',
     );
-    cb({ kind: 'done', sessionId: req.id, exitCode, endedAt: Date.now(), metrics });
+    cb({
+      kind: 'done',
+      sessionId: req.id,
+      exitCode,
+      endedAt: Date.now(),
+      metrics,
+      employee,
+      prompt: req.prompt,
+      output: accumulatedOutput,
+    });
   });
 
   const inputMsg = {
@@ -174,14 +196,14 @@ function handleLine(
   outputPath: string,
   cb: SubSessionCallback,
   tracker: StatusTracker,
-): void {
+): string | null {
   let event: unknown;
   try {
     event = JSON.parse(line);
   } catch {
-    return;
+    return null;
   }
-  if (typeof event !== 'object' || event === null) return;
+  if (typeof event !== 'object' || event === null) return null;
   const e = event as Record<string, unknown>;
 
   // 모든 라인은 status tracker에 ingest — model/tokens/cost/rate-limit 추출.
@@ -195,9 +217,11 @@ function handleLine(
         const text = delta['text'];
         appendFileSync(outputPath, text, 'utf-8');
         cb({ kind: 'chunk', sessionId, text });
+        return text;
       }
     }
   }
+  return null;
 }
 
 export function killSub(sessionId: string): void {

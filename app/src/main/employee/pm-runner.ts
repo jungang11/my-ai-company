@@ -130,19 +130,24 @@ export function sendToPM(userText: string, cb: PMCallbacks): void {
   // Write/Bash 등 도구 사용이 막혀버림. 개인 머신/sandbox 없음 컨셉이라 bypass.
   // --exclude-dynamic-system-prompt-sections: cwd/env/git status 등 per-machine 섹션을
   // 첫 user message로 옮겨 prompt cache hit 향상. --append-system-prompt와 호환됨.
+  // PM은 오케스트레이터 — Bash/Grep/Edit으로 직접 일감 처리 금지. spawn-request 작성(Write)과
+  // sub 결과 read(Read)만 허용해서 본질 (sub 활용)을 행동으로 강제. 시스템 프롬프트로만
+  // 부탁하면 Opus가 합리화해서 직접 처리해버림.
   const args = [
     '--print',
     '--verbose',
     '--permission-mode',
     'bypassPermissions',
     '--exclude-dynamic-system-prompt-sections',
+    '--tools',
+    'Task,Write',
     '--input-format',
     'stream-json',
     '--output-format',
     'stream-json',
     '--include-partial-messages',
     ...nextSessionArgs(),
-    '--append-system-prompt',
+    '--system-prompt',
     composedSystemPrompt,
     '--add-dir',
     projectRoot,

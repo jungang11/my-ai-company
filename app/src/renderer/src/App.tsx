@@ -14,6 +14,7 @@ export function App() {
   const [status, setStatus] = useState<StatusSnapshot | null>(null);
   const [profiles, setProfiles] = useState<EmployeeProfile[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [pmPending, setPmPending] = useState(false);
 
   useEffect(() => {
     if (!window.api) {
@@ -38,6 +39,7 @@ export function App() {
     });
 
     const offData = window.api.onPMOutput(({ text }) => {
+      setPmPending(false); // 첫 chunk 도착 = pending 해제
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last && last.role === 'pm' && last.streaming) {
@@ -48,6 +50,7 @@ export function App() {
     });
 
     const offExit = window.api.onPMExit(({ exitCode }) => {
+      setPmPending(false);
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (!last || last.role !== 'pm') return prev;
@@ -117,16 +120,12 @@ export function App() {
   }
 
   async function send(text: string) {
-    // PM 응답이 도착할 때까지 빈 placeholder 버블(streaming=true)을 미리 띄워
-    // 사장이 "응답 준비 중"임을 시각적으로 인지하게 한다 — emerald 깜빡이만 보임.
-    setMessages((prev) => [
-      ...prev,
-      newMessage('boss', text),
-      newMessage('pm', '', true),
-    ]);
+    setMessages((prev) => [...prev, newMessage('boss', text)]);
+    setPmPending(true);
     try {
       await window.api.sendToPM(text);
     } catch (err) {
+      setPmPending(false);
       const msg = err instanceof Error ? err.message : String(err);
       setMessages((prev) => [...prev, newMessage('pm', `[전송 실패: ${msg}]`)]);
     }
@@ -146,7 +145,7 @@ export function App() {
           onOpenSession={(row) => setSelectedSessionId(row.sessionId)}
         />
         <div className="flex flex-1 flex-col ring-1 ring-slate-800">
-          <Chat messages={messages} onSend={send} />
+          <Chat messages={messages} onSend={send} pending={pmPending} />
         </div>
       </div>
       <StatusBar init={statusInit} status={status} />
