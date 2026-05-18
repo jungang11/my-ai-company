@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Chat } from './components/Chat';
 import { EmployeeRoster } from './components/EmployeeRoster';
 import { StatusBar } from './components/StatusBar';
+import { SubSessionDetail } from './components/SubSessionDetail';
 import { newMessage, type ChatMessage } from './state/chat-store';
 import type { EmployeeRow } from './state/employee-store';
 import type { EmployeeProfile, StatusInit, StatusSnapshot } from '../../shared/ipc';
@@ -12,6 +13,7 @@ export function App() {
   const [statusInit, setStatusInit] = useState<StatusInit | null>(null);
   const [status, setStatus] = useState<StatusSnapshot | null>(null);
   const [profiles, setProfiles] = useState<EmployeeProfile[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!window.api) {
@@ -126,15 +128,25 @@ export function App() {
     }
   }
 
+  const selectedRow = selectedSessionId
+    ? roster.find((r) => r.sessionId === selectedSessionId) ?? null
+    : null;
+
   return (
     <main className="flex h-full flex-col bg-slate-900">
       <div className="flex flex-1 overflow-hidden">
-        <EmployeeRoster rows={roster} profiles={profiles} onToggle={handleToggle} />
+        <EmployeeRoster
+          rows={roster}
+          profiles={profiles}
+          onToggle={handleToggle}
+          onOpenSession={(row) => setSelectedSessionId(row.sessionId)}
+        />
         <div className="flex flex-1 flex-col ring-1 ring-slate-800">
           <Chat messages={messages} onSend={send} />
         </div>
       </div>
       <StatusBar init={statusInit} status={status} />
+      <SubSessionDetail row={selectedRow} onClose={() => setSelectedSessionId(null)} />
     </main>
   );
 }

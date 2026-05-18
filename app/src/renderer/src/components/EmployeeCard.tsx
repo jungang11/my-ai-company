@@ -18,14 +18,22 @@ const STATUS_DOT: Record<EmployeeRow['status'], string> = {
   failed: 'bg-rose-500',
 };
 
-export function EmployeeCard({ row }: { row: EmployeeRow }) {
+type Props = {
+  row: EmployeeRow;
+  onOpen?: (row: EmployeeRow) => void;
+};
+
+export function EmployeeCard({ row, onOpen }: Props) {
   const elapsedMs = (row.endedAt ?? Date.now()) - row.startedAt;
   const elapsed = Math.max(0, Math.round(elapsedMs / 1000));
   const tail = row.output.slice(-200).trim();
 
   return (
-    <div
-      className={`rounded-xl bg-slate-900 p-3 text-xs ring-1 ${STATUS_RING[row.status]} shadow-sm`}
+    <button
+      type="button"
+      onClick={() => onOpen?.(row)}
+      className={`w-full cursor-pointer rounded-xl bg-slate-900 p-3 text-left text-xs ring-1 ${STATUS_RING[row.status]} shadow-sm transition hover:bg-slate-800/80 hover:ring-emerald-400/40`}
+      title="클릭해서 전체 로그 보기"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -43,6 +51,6 @@ export function EmployeeCard({ row }: { row: EmployeeRow }) {
           {tail}
         </div>
       )}
-    </div>
+    </button>
   );
 }
