@@ -14,26 +14,30 @@
 
 ## 핵심 메타포
 
-| 현실 세계 | payroll-os |
-|---|---|
-| 구독 결제 | 고용 계약 |
-| 결제 중단 | 직원 퇴사 (해당 직원 비활성화) |
-| 구독료 | 인건비 |
-| 출근 | CLI 세션 spawn |
-| 퇴근 | CLI 세션 종료 |
-| 회사 게시판 | `workspace/board.md` |
-| 슬랙 | `workspace/chat/` 마크다운들 |
-| 인수인계 문서 | `workspace/handoff/` |
-| 스탠드업 | `workspace/standup/{date}.md` |
+| 현실 세계 | payroll-os | 구현 |
+|---|---|---|
+| 구독 결제 | 고용 계약 | `core/employees/<id>.json` |
+| 결제 중단 | 직원 퇴사 (비활성화) | 좌측 명부 체크박스 토글 |
+| 구독료 | 인건비 | UsagePanel 직원별 토큰/duration 누적 |
+| 출근 | CLI 세션 spawn | PM child_process / sub-agent Task tool |
+| 퇴근 | CLI 세션 종료 | exit 후 카드 "최근 종료"로 이동 |
+| 인수인계 / 게시판 / 슬랙 | (PM 단일 채팅으로 회수) | Phase 2 시연 후 board/chat/handoff 디렉토리 제거 |
+| 작업 로그 | 영속 디렉토리 | `workspace/sessions/<taskId>/{output.log, done}` |
 
-## 직원 직급 (참고: cmux-team의 Manager/Conductor/Agent)
+> 초안에는 `workspace/board.md` 칸반 + `workspace/chat/` 채널 + `workspace/handoff/` 마크다운으로 직원 간 통신을 명시했으나, Phase 2 본질 시연 후 **PM의 Task tool 호출 + 단일 채팅**으로 회수. 사장이 보는 GUI는 PM 채팅 + 좌측 사이드바 카드 + 하단 statusbar 3종.
 
-- **사장 (User)** — 사람. 안건/지시만 내림.
-- **PM 직원** — 사장 지시를 태스크로 쪼개서 보드에 올림. 인수인계 작성.
-- **개발자/문서/기획 직원** — 실제 작업 수행.
-- **리뷰어 직원** — 산출물 검수.
+## 직원 직급 (실제 회사 구조)
 
-각 직원은 특정 CLI 백엔드(Claude Code / Codex CLI / Gemini CLI)에 매핑되고, 직원 카드에 역할(시스템 프롬프트), 활성 상태, 누적 작업 로그가 붙어있음.
+| 직군 | 이름 | 모델 | 역할 |
+|---|---|---|---|
+| PM | 박PM | `claude-opus-4-7` (xhigh) | 사장 직통, Task tool로 분배 + 통합 보고 (항상 활성) |
+| 개발자 (일상) | 김개발 (dev-1) | `opus` | 일상 코드 작성·리팩토링 |
+| 개발자 (어려움) | 박아키 (dev-arch) | `opus` | 아키텍처·race·security |
+| 기획자 | 이기획 (planner-1) | `opus` | 분석·리서치·문서 |
+| QA | 정검증 (qa-1) | `sonnet` | 검증·리뷰·회귀 |
+| 잡일 | 막내 (utility-1) | `haiku` | 분류·추출·포맷·짧은 요약 |
+
+직군 정의는 `core/employees/<id>.json` (메타데이터) + `.claude/agents/<id>.md` (claude의 정통 sub-agent 정의). 좌측 명부에서 PM 외 5명은 활성/비활성 토글 가능. Task tool model 한계로 `opus-4-6`/`opus-4-7` 세분화는 sub-agent에서 불가능 — 외부 CLI 백엔드(Codex/Gemini) 도입 시에만 유효 (Phase 3 보류).
 
 ## 핵심 제약
 
@@ -42,54 +46,59 @@
 3. **공유 상태는 파일로.** 직원들은 어차피 파일 읽고 쓰는 게 본업이라, 별도 API 만들지 말고 마크다운/SQLite로 통신.
 4. **GUI는 모니터링용.** 직원들이 일하는 걸 보는 창이지, 직원들이 GUI를 거쳐서 일하는 게 아님.
 
-## 디렉토리 구조
+## 디렉토리 구조 (실제)
 
 ```
 payroll-os/
-├── app/                  # GUI (Electron 또는 Tauri)
-│   ├── main/             # 메인 프로세스: CLI subprocess 관리, pty
-│   ├── renderer/         # UI: 직원 카드, 보드, 채팅, 픽셀 사무실
-│   └── shared/
-├── core/                 # 오케스트레이션 로직 (GUI 독립)
-│   ├── employees/        # 직원 정의 (역할, 모델, 시스템 프롬프트)
-│   ├── workflows/        # YAML 워크플로우 (참고: microsoft/conductor)
-│   ├── router/           # 인수인계 라우터 (참고: clideck autopilot)
-│   └── board/            # 공유 게시판 파일 watch + 파싱
-├── workspace/            # 직원들의 작업 공간 (런타임)
-│   ├── board.md          # 칸반 보드
-│   ├── standup/          # 일자별 스탠드업
-│   ├── chat/             # 채널별 채팅
-│   ├── handoff/          # 인수인계 문서
-│   └── tasks/            # 태스크별 상세
-├── references/           # 학습용 외부 repo (git clone, 커밋 안 함)
-└── docs/
+├── app/                          # Electron 33 + React 19 + Tailwind v4
+│   ├── src/main/
+│   │   ├── employee/             # PM 시스템 프롬프트 + pm-runner
+│   │   ├── spawn/                # 외부 CLI 직원용 file-watcher fallback (Phase 3)
+│   │   ├── sessions/             # sub-agent output 영속 read/write
+│   │   ├── status.ts             # 토큰/cache/cost/rate limit 추적
+│   │   └── index.ts
+│   ├── src/preload/              # contextBridge IPC 노출
+│   ├── src/renderer/             # React UI (Chat / EmployeeRoster / StatusBar / UsagePanel)
+│   └── src/shared/ipc.ts         # IPC 채널 + 타입
+├── core/
+│   ├── employees/                # 직원 메타데이터 JSON (model/effort/시스템 프롬프트)
+│   └── board/                    # Phase 1 칸반 파서 (현재 UI 미연결, 보존)
+├── .claude/agents/               # claude 정통 sub-agent 정의 (PM이 Task tool로 spawn)
+├── workspace/                    # 런타임 (gitignore)
+│   ├── sessions/<taskId>/        # sub-agent 결과 영속화 (output.log + done JSON)
+│   └── spawn-request/            # 외부 CLI 직원 fallback (Phase 3)
+├── references/                   # 학습용 외부 repo (gitignore)
+└── docs/                         # PROGRESS.md / models.md / phase{1,2,3}-plan.md
 ```
+
+> 초안의 `core/workflows`(YAML 워크플로우)와 `core/router`(LLM autopilot)는 **회수**. PM의 Task tool 한 개로 흡수됨.
 
 ## 로드맵
 
-### Phase 1 — 텍스트 MVP (게임 요소 없음)
-- [ ] Electron 또는 Tauri로 GUI 껍데기
-- [ ] CLI 세션 1개 spawn/kill, stdout 표시 (node-pty 또는 portable-pty)
-- [ ] 직원 1명: Claude Code 기반 "개발자"
-- [ ] `workspace/board.md` watch + 칸반 렌더링
-- [ ] 본인이 GUI에서 메시지 보내면 직원 CLI에 주입
+### Phase 1 — 텍스트 MVP (✅ 2026-05-17)
+- [x] Electron GUI 껍데기 (Tauri 거부 — Rust 학습 + Windows 빌드 비용)
+- [x] CLI 세션 spawn/kill + stdout 표시 (`@homebridge/node-pty-prebuilt-multiarch`)
+- [x] 직원 6명 — PM(Opus 4.7) + dev-1/dev-arch/planner-1/qa-1/utility-1
+- [~] `workspace/board.md` watch + 칸반 렌더링 — **회수**. 파서(`core/board/parser.ts`)만 보존, UI 미연결. PM 채팅 단일 인터페이스로 단순화.
+- [x] GUI 메시지 → PM child_process stdin 주입
 
-### Phase 2 — 협업
-- [ ] 직원 2명 (PM + 개발자). 인수인계 흐름 1회 성공
-- [ ] 채널별 채팅 뷰 (`#general`, `#dev`)
-- [ ] 회의 모드 (사장이 안건 적으면 직원들이 의견 append)
-- [ ] 라이센스/고용 상태 토글 (직원 카드의 "퇴사" 버튼)
+### Phase 2 — 협업 (✅ 2026-05-18 본질 시연 통과)
+- [x] PM이 sub-agent 자율 spawn → 결과 통합 보고. **Task tool 패턴**으로 구현 (file-watcher + Write 패턴은 PM에게 unnatural해 회귀).
+- [~] 채널별 채팅 뷰 — **회수**. 단일 PM 채팅 + 좌측 sub-agent 카드로 충분.
+- [x] 회의 모드 — 사장이 `회의: <안건>`으로 시작 → PM이 시스템 프롬프트로 흡수 → 다수 직원에 동시 spawn.
+- [x] 직원 명부 active 토글 — 좌측 사이드바 체크박스. 비활성 시 PM 카탈로그에서 빠짐 + spawn 거절.
 
-### Phase 3 — 다양화
-- [ ] Codex CLI 직원, Gemini CLI 직원 추가
-- [ ] 직원별 누적 사용량/비용 추적
-- [ ] Figma MCP 디자인 직원
+### Phase 3 — 다양화 (부분 진행)
+- [ ] Codex CLI 직원, Gemini CLI 직원 — **사장 결정 보류** (2026-05-18). 외부 CLI 직원용 file-watcher 인프라(`app/src/main/spawn/`)는 fallback으로 보존.
+- [x] 직원별 누적 사용량 추적 — 좌측 명부 row inline(spawn/tokens) + `UsagePanel` 풀버전(직원별 in/out/cache R/C/duration 막대 그래프).
+- [ ] Figma MCP 디자인 직원 — **보류**.
+- [x] sub-agent 영속화 — `workspace/sessions/<taskId>/{output.log, done}` 저장 + 앱 시작 시 historical 카드 복원.
 
-### Phase 4 — 픽셀 사무실 (재미 페이즈)
-- [ ] 직원 캐릭터 스프라이트 (idle/working/away 애니메이션)
-- [ ] 사무실 맵 렌더링 (책상, 컴퓨터, 회의실)
-- [ ] 상태 → 캐릭터 행동 매핑 (working = 책상에서 타이핑 애니메이션)
-- [ ] 채팅하면 캐릭터 머리 위 말풍선
+### Phase 4 — 픽셀 사무실 (재미 페이즈, 보류)
+- [ ] 직원 캐릭터 스프라이트 (idle/working/away)
+- [ ] 사무실 맵 렌더링
+- [ ] 상태 → 캐릭터 행동 매핑
+- [ ] 채팅 → 말풍선
 
 ## 참고 프로젝트 (`references/`)
 
@@ -108,3 +117,13 @@ payroll-os/
 - 다중 사용자 — 1인 사장만 가정
 - 클라우드 배포 — 로컬 데스크톱 only
 - Anthropic API 직접 호출 — Claude Code CLI를 통한 간접 호출만
+
+## 빠른 진입
+
+```powershell
+cd app
+npm install
+npm run dev
+```
+
+자세한 진행 상황 / 환경 / 시연 시나리오는 `docs/PROGRESS.md` 한 페이지로 정리되어 있음.
