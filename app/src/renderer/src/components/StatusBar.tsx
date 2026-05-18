@@ -29,13 +29,15 @@ function rateLimitChip(info: RateLimitInfo) {
   const label =
     info.type === 'five_hour' ? '5h' : info.type === 'seven_day' ? '7d' : info.type;
   const ok = info.status === 'allowed';
+  const msLeft = info.resetsAtMs - Date.now();
+  // limited면 빨강, 30분 이내 임박이면 amber, 그 외 slate.
+  const colorClass = !ok
+    ? 'bg-rose-900/40 text-rose-300'
+    : msLeft > 0 && msLeft < 30 * 60 * 1000
+      ? 'bg-amber-900/40 text-amber-300'
+      : 'bg-slate-800 text-slate-400';
   return (
-    <span
-      key={info.type}
-      className={`rounded px-1.5 py-0.5 ${
-        ok ? 'bg-slate-800 text-slate-400' : 'bg-rose-900/40 text-rose-300'
-      }`}
-    >
+    <span key={info.type} className={`rounded px-1.5 py-0.5 ${colorClass}`}>
       {label} {ok ? '·' : '!'} {formatRelative(info.resetsAtMs)}
     </span>
   );

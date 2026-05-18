@@ -24,7 +24,7 @@ export function MessageInput({ onSend }: { onSend: (text: string) => void }) {
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={onKey}
         rows={2}
-        placeholder="PM에게 지시... (Enter 전송, Shift+Enter 줄바꿈)"
+        placeholder="PM에게 지시... (Enter 전송, Shift+Enter 줄바꿈, &quot;회의: &lt;안건&gt;&quot;로 보내면 PM이 여러 직원에 동시 spawn)"
         className="flex-1 resize-none rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none"
       />
       <button
