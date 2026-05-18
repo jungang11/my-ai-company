@@ -1,9 +1,21 @@
 import type { EmployeeProfile as Profile } from '../../../shared/ipc';
 
+export type EmployeeUsage = {
+  spawns: number;
+  totalTokens: number;
+};
+
 type Props = {
   profile: Profile;
   onToggle: (id: string, next: boolean) => void;
+  usage?: EmployeeUsage;
 };
+
+function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
 
 const ROLE_COLOR: Record<string, string> = {
   PM: 'text-amber-300',
@@ -19,18 +31,17 @@ function shortModel(model?: string): string {
   return model.replace('claude-', '').replace('-20251001', '');
 }
 
-export function EmployeeProfileRow({ profile, onToggle }: Props) {
+export function EmployeeProfileRow({ profile, onToggle, usage }: Props) {
   const isPM = profile.id === 'pm';
   const dim = !profile.active && !isPM;
   const roleColor = ROLE_COLOR[profile.role] ?? 'text-slate-300';
+  const hasUsage = usage && usage.spawns > 0;
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs ${
-        dim ? 'opacity-50' : ''
-      } hover:bg-slate-900/60`}
+      className={`rounded-lg px-2 py-1.5 text-xs ${dim ? 'opacity-50' : ''} hover:bg-slate-900/60`}
     >
-      <label className="flex flex-1 cursor-pointer items-center gap-2">
+      <label className="flex cursor-pointer items-center gap-2">
         <input
           type="checkbox"
           checked={profile.active}
@@ -45,6 +56,11 @@ export function EmployeeProfileRow({ profile, onToggle }: Props) {
           <span className="ml-auto text-[10px] text-slate-500">{shortModel(profile.model)}</span>
         </div>
       </label>
+      {hasUsage && (
+        <div className="mt-1 ml-6 text-[10px] text-slate-500" title="누적 spawn 횟수 · input+output 토큰">
+          {usage.spawns}회 · {formatTokens(usage.totalTokens)} tok
+        </div>
+      )}
     </div>
   );
 }

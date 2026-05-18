@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import type { EmployeeProfile } from '../../../shared/ipc';
 import type { EmployeeRow } from '../state/employee-store';
 import { EmployeeCard } from './EmployeeCard';
-import { EmployeeProfileRow } from './EmployeeProfile';
+import { EmployeeProfileRow, type EmployeeUsage } from './EmployeeProfile';
 
 type Props = {
   rows: EmployeeRow[];
@@ -14,6 +15,19 @@ export function EmployeeRoster({ rows, profiles, onToggle, onOpenSession }: Prop
   const working = rows.filter((r) => r.status === 'working');
   const finished = rows.filter((r) => r.status !== 'working');
   const activeCount = profiles.filter((p) => p.active).length;
+
+  // 직원별 누적 spawn 횟수 + 토큰 합산. PR5 minimal.
+  const usageByEmployee = useMemo(() => {
+    const map = new Map<string, EmployeeUsage>();
+    for (const r of rows) {
+      if (!r.metrics) continue;
+      const cur = map.get(r.employeeId) ?? { spawns: 0, totalTokens: 0 };
+      cur.spawns += 1;
+      cur.totalTokens += r.metrics.inputTokens + r.metrics.outputTokens;
+      map.set(r.employeeId, cur);
+    }
+    return map;
+  }, [rows]);
 
   return (
     <aside className="flex w-72 flex-col gap-3 overflow-y-auto border-r border-slate-800 bg-slate-950/60 p-3">
@@ -29,7 +43,14 @@ export function EmployeeRoster({ rows, profiles, onToggle, onOpenSession }: Prop
         {profiles.length === 0 ? (
           <div className="text-xs text-slate-600">로딩 중…</div>
         ) : (
-          profiles.map((p) => <EmployeeProfileRow key={p.id} profile={p} onToggle={onToggle} />)
+          profiles.map((p) => (
+            <EmployeeProfileRow
+              key={p.id}
+              profile={p}
+              onToggle={onToggle}
+              usage={usageByEmployee.get(p.id)}
+            />
+          ))
         )}
       </section>
 
