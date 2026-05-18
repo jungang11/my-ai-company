@@ -92,11 +92,14 @@ origin은 `85556a7`까지 push 됨 (Phase 1 PR6.5까지). 그 위 15+ commit이 
 - 직원 시스템 프롬프트를 cache 친화적 prefix로 더 안정화.
 - sub session prompt에서 불필요한 동적 부분 trim.
 
-### 3. Phase 3 사전 검토 (README 로드맵)
-- Codex CLI 직원 (코딩 백엔드 다양화)
-- Gemini CLI 직원 (벤치마크/대안)
-- Figma MCP 디자인 직원
-- 직원별 누적 사용량/비용 그래프 (PR3에서 단건은 됨, 다건 패널은 보류)
+### 3. Phase 3 진입 (사장 결정 대기)
+**`docs/phase3-plan.md` draft 작성됨** (`e5244e9`). 사장 결정 안건 4개 §끝:
+- 진입 시점 (시연 직후?)
+- 백엔드 우선순위 (Codex/Figma/Gemini 중 어느 거 먼저?)
+- 누적 비용(PR5) Phase 3에 vs 별도
+- 영속 read(PR6) 우선순위 — 시연 안전망으로 먼저 vs Phase 3 안에서
+
+PR 후보: 다중 CLI 백엔드 추상화, dev-codex, dev-gemini, Figma MCP+designer-1, 누적 cost panel, sessions 영속 read.
 
 ---
 
@@ -114,7 +117,7 @@ origin은 `85556a7`까지 push 됨 (Phase 1 PR6.5까지). 그 위 15+ commit이 
 
 ## 새 세션 진입 절차
 
-1. `README.md` + `CLAUDE.md` + 이 `docs/PROGRESS.md` + (필요시) `docs/models.md` / `docs/phase1-plan.md` / `docs/phase2-plan.md` 읽기.
+1. `README.md` + `CLAUDE.md` + 이 `docs/PROGRESS.md` + (필요시) `docs/models.md` / `docs/phase1-plan.md` / `docs/phase2-plan.md` / `docs/phase3-plan.md` 읽기.
 2. 메모리 자동 로드 (`~/.claude/projects/.../memory/MEMORY.md`).
 3. 마지막 commit `e280e63` 위에서 시작.
 4. 사장 다음 지시 대기:
