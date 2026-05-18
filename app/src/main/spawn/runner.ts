@@ -22,6 +22,7 @@ type EmployeeDef = {
   model?: string;
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
   shortDescription?: string;
+  active: boolean;
 };
 
 export type SubSessionUpdate =
@@ -53,6 +54,11 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
   }
 
   const employee = loadEmployee(req.employeeId);
+  if (!employee.active) {
+    // 비활성 직원에 spawn-request가 들어오면 거절. PM 카탈로그가 active만 노출하니
+    // 일반적으론 발생하지 않지만, 사장 손편집/race로 가능 — 사일런트 무시 대신 명시.
+    throw new Error(`employee ${req.employeeId} is inactive — spawn denied`);
+  }
   const sessionDir = ensureSessionDir(req.id);
   const outputPath = resolve(sessionDir, OUTPUT_LOG_NAME);
   const donePath = resolve(sessionDir, DONE_MARKER_NAME);

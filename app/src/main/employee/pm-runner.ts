@@ -1,10 +1,11 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { StatusTracker } from '../status.js';
 import type { StatusSnapshot } from '../../shared/ipc.js';
+import { listEmployees } from './manager.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -17,18 +18,8 @@ type PMDef = {
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 };
 
-type EmployeeCatalogEntry = {
-  id: string;
-  name: string;
-  role: string;
-  model?: string;
-  effort?: string;
-  shortDescription?: string;
-};
-
 const projectRoot = resolve(__dirname, '../../..');
 const PM_DEF_PATH = resolve(projectRoot, 'core/employees/pm.json');
-const EMPLOYEES_DIR = resolve(projectRoot, 'core/employees');
 
 /**
  * PM 정의를 매 호출마다 read해서 시스템 프롬프트 튜닝 시 dev 재시작 없이 반영.
@@ -38,27 +29,13 @@ function loadPMDef(): PMDef {
 }
 
 /**
- * pm.json 제외한 모든 core/employees/*.json을 읽어 PM에게 보여줄 카탈로그 문자열을 만든다.
- * 사장이 직원 JSON 추가/수정하면 PM이 다음 spawn에서 자동 인지.
+ * pm.json 제외한 모든 core/employees/*.json 중 active=true만 PM 카탈로그에 노출.
+ * 사장이 비활성 토글하면 PM이 다음 spawn에서 그 직원을 모르게 됨 → spawn 거절 시도 방지.
  *
- * **결정적 순서 보장**: readdirSync 결과가 OS-dependent이라 그대로 join하면 시스템마다
- * 카탈로그 prefix가 달라져 prompt cache hit이 깨짐. 파일명 알파벳 정렬로 안정화 + 카탈로그 안
- * employee id 정렬도 안정화 — 같은 직원 명부면 같은 prompt가 생성되도록.
+ * 결정적 순서: manager.listEmployees() 가 파일명 + id 두 단계 정렬을 보장 → prompt cache hit.
  */
 function loadCatalog(): string {
-  const files = readdirSync(EMPLOYEES_DIR)
-    .filter((f) => f.endsWith('.json') && f !== 'pm.json')
-    .sort();
-  const entries: EmployeeCatalogEntry[] = files
-    .map((f) => {
-      try {
-        return JSON.parse(readFileSync(resolve(EMPLOYEES_DIR, f), 'utf-8')) as EmployeeCatalogEntry;
-      } catch {
-        return null;
-      }
-    })
-    .filter((x): x is EmployeeCatalogEntry => x !== null)
-    .sort((a, b) => a.id.localeCompare(b.id));
+  const entries = listEmployees().filter((e) => e.id !== 'pm' && e.active);
 
   if (entries.length === 0) return '';
 

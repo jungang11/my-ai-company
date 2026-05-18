@@ -47,7 +47,12 @@ function handleAdded(path: string, cb: SubSessionCallback): void {
     } catch {
       /* ignore */
     }
-    runSubSession(req, cb);
+    try {
+      runSubSession(req, cb);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn('[spawn-watcher] runSubSession 거절:', path, msg);
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[spawn-watcher] 처리 실패:', path, msg);
