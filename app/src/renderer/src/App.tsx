@@ -3,6 +3,7 @@ import { Chat } from './components/Chat';
 import { EmployeeRoster } from './components/EmployeeRoster';
 import { StatusBar } from './components/StatusBar';
 import { SubSessionDetail } from './components/SubSessionDetail';
+import { UsagePanel } from './components/UsagePanel';
 import { newMessage, type ChatMessage } from './state/chat-store';
 import type { EmployeeRow } from './state/employee-store';
 import type {
@@ -67,6 +68,7 @@ export function App() {
   const [profiles, setProfiles] = useState<EmployeeProfile[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [pmPending, setPmPending] = useState(false);
+  const [usageOpen, setUsageOpen] = useState(false);
 
   useEffect(() => {
     if (!window.api) {
@@ -172,6 +174,7 @@ export function App() {
           profiles={profiles}
           onToggle={handleToggle}
           onOpenSession={(row) => setSelectedSessionId(row.sessionId)}
+          onOpenUsage={() => setUsageOpen(true)}
         />
         <div className="flex flex-1 flex-col ring-1 ring-slate-800">
           <Chat messages={messages} onSend={send} pending={pmPending} />
@@ -179,6 +182,9 @@ export function App() {
       </div>
       <StatusBar init={statusInit} status={status} />
       <SubSessionDetail row={selectedRow} onClose={() => setSelectedSessionId(null)} />
+      {usageOpen && (
+        <UsagePanel rows={roster} profiles={profiles} onClose={() => setUsageOpen(false)} />
+      )}
     </main>
   );
 }

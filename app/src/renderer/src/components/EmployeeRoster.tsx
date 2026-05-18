@@ -9,9 +9,10 @@ type Props = {
   profiles: EmployeeProfile[];
   onToggle: (id: string, next: boolean) => void;
   onOpenSession?: (row: EmployeeRow) => void;
+  onOpenUsage?: () => void;
 };
 
-export function EmployeeRoster({ rows, profiles, onToggle, onOpenSession }: Props) {
+export function EmployeeRoster({ rows, profiles, onToggle, onOpenSession, onOpenUsage }: Props) {
   const working = rows.filter((r) => r.status === 'working');
   const finished = rows.filter((r) => r.status !== 'working');
   const activeCount = profiles.filter((p) => p.active).length;
@@ -78,6 +79,16 @@ export function EmployeeRoster({ rows, profiles, onToggle, onOpenSession }: Prop
             .map((r) => <EmployeeCard key={r.sessionId} row={r} onOpen={onOpenSession} />)
         )}
       </section>
+
+      {onOpenUsage && (
+        <button
+          type="button"
+          onClick={onOpenUsage}
+          className="mt-auto rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-300 hover:border-emerald-500/50 hover:text-emerald-300"
+        >
+          전체 사용량 보기 →
+        </button>
+      )}
     </aside>
   );
 }
