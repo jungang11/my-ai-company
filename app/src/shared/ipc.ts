@@ -29,6 +29,8 @@ export type StatusSnapshot = {
   /** session 누적 — 매 응답마다 더해짐 */
   totalInputTokens: number;
   totalOutputTokens: number;
+  totalCacheCreationTokens: number;
+  totalCacheReadTokens: number;
   totalCostUsd: number;
   contextWindow: number;
   /** rate_limit_event 누적 (가장 최근값) */

@@ -87,11 +87,15 @@ origin push 기준: 마지막 push 후 누적된 commit 다수. **회사 GitHub 
 ### 1. 시연 검증 (사장 personal 시간)
 위 5개 시나리오 돌려보고 결과 확인. 실패한 케이스는 PM 시스템 프롬프트 튜닝 (JSON live-reload라 dev 재시작 불필요).
 
-### 2. 토큰 최적화 라운드
-`docs/models.md §6` 참조. 우선순위:
-- **Prompt cache hit 극대화**: `loadCatalog()`가 결정적 결과를 내도록 보장 (현재 readdirSync 결과 순서가 OS-dependent — 알파벳 정렬 강제).
-- **`--exclude-dynamic-system-prompt-sections`** flag 추가 검토 (PM/sub args에).
-- **statusbar에 cache_read_input_tokens 노출** — cache hit rate 가시화.
+### 2. 토큰 최적화 라운드 — ✅ 1차 완료 (PR9)
+- ✅ `loadCatalog()` 결정적 정렬 (파일명 + employee id 알파벳).
+- ✅ `--exclude-dynamic-system-prompt-sections` PM/sub args에 추가.
+- ✅ statusbar cache hit% + cache_read/cache_creation 누적 노출.
+
+남은 2차 후보 (시연 후 효과 보고 결정):
+- 직원 시스템 프롬프트를 cache 친화적 prefix 형태로 더 안정화.
+- sub session에 전달하는 작업 prompt에서 불필요한 동적 부분 trim.
+- utility-1 (Haiku 4.5) 직군 신설 — 단순 작업용 sub-agent.
 
 ### 3. 후속 직군 추가 검토 (사장 결정)
 - design-reviewer (Figma MCP 연동) — Phase 3 로드맵

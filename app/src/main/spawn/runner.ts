@@ -59,11 +59,13 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
 
   writeFileSync(outputPath, '', 'utf-8');
 
+  // --exclude-dynamic-system-prompt-sections: per-machine 섹션을 user message로 옮겨 cache hit 향상.
   const args = [
     '--print',
     '--verbose',
     '--permission-mode',
     'bypassPermissions',
+    '--exclude-dynamic-system-prompt-sections',
     '--input-format',
     'stream-json',
     '--output-format',

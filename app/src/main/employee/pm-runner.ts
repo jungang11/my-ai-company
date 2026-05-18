@@ -40,11 +40,15 @@ function loadPMDef(): PMDef {
 /**
  * pm.json 제외한 모든 core/employees/*.json을 읽어 PM에게 보여줄 카탈로그 문자열을 만든다.
  * 사장이 직원 JSON 추가/수정하면 PM이 다음 spawn에서 자동 인지.
+ *
+ * **결정적 순서 보장**: readdirSync 결과가 OS-dependent이라 그대로 join하면 시스템마다
+ * 카탈로그 prefix가 달라져 prompt cache hit이 깨짐. 파일명 알파벳 정렬로 안정화 + 카탈로그 안
+ * employee id 정렬도 안정화 — 같은 직원 명부면 같은 prompt가 생성되도록.
  */
 function loadCatalog(): string {
-  const files = readdirSync(EMPLOYEES_DIR).filter(
-    (f) => f.endsWith('.json') && f !== 'pm.json',
-  );
+  const files = readdirSync(EMPLOYEES_DIR)
+    .filter((f) => f.endsWith('.json') && f !== 'pm.json')
+    .sort();
   const entries: EmployeeCatalogEntry[] = files
     .map((f) => {
       try {
@@ -53,7 +57,8 @@ function loadCatalog(): string {
         return null;
       }
     })
-    .filter((x): x is EmployeeCatalogEntry => x !== null);
+    .filter((x): x is EmployeeCatalogEntry => x !== null)
+    .sort((a, b) => a.id.localeCompare(b.id));
 
   if (entries.length === 0) return '';
 
@@ -146,11 +151,14 @@ export function sendToPM(userText: string, cb: PMCallbacks): void {
   // --verbose는 --print + stream-json 조합의 필수 flag.
   // --permission-mode bypassPermissions: --print 모드는 권한 prompt에 응답 불가 →
   // Write/Bash 등 도구 사용이 막혀버림. 개인 머신/sandbox 없음 컨셉이라 bypass.
+  // --exclude-dynamic-system-prompt-sections: cwd/env/git status 등 per-machine 섹션을
+  // 첫 user message로 옮겨 prompt cache hit 향상. --append-system-prompt와 호환됨.
   const args = [
     '--print',
     '--verbose',
     '--permission-mode',
     'bypassPermissions',
+    '--exclude-dynamic-system-prompt-sections',
     '--input-format',
     'stream-json',
     '--output-format',

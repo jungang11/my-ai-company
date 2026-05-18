@@ -49,6 +49,8 @@ export class StatusTracker {
   private contextWindow = 1_000_000;
   private totalInput = 0;
   private totalOutput = 0;
+  private totalCacheCreation = 0;
+  private totalCacheRead = 0;
   private totalCost = 0;
   private lastInput = 0;
   private lastOutput = 0;
@@ -95,8 +97,11 @@ export class StatusTracker {
         this.lastOutput = output;
         this.lastCacheCreation = cacheCreate;
         this.lastCacheRead = cacheRead;
+        // totalInput은 fresh input + cache 생성 비용을 모두 포함 (cache read는 별도).
         this.totalInput += input + cacheCreate;
         this.totalOutput += output;
+        this.totalCacheCreation += cacheCreate;
+        this.totalCacheRead += cacheRead;
       }
 
       this.totalCost += cost;
@@ -123,6 +128,8 @@ export class StatusTracker {
       lastCacheReadTokens: this.lastCacheRead,
       totalInputTokens: this.totalInput,
       totalOutputTokens: this.totalOutput,
+      totalCacheCreationTokens: this.totalCacheCreation,
+      totalCacheReadTokens: this.totalCacheRead,
       totalCostUsd: this.totalCost,
       contextWindow: this.contextWindow,
       rateLimits: [...this.rateLimits.values()],

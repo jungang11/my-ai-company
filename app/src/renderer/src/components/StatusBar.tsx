@@ -47,6 +47,17 @@ export function StatusBar({ init, status }: Props) {
       ? Math.round((status.totalInputTokens / status.contextWindow) * 100)
       : 0;
 
+  // cache hit rate: cache_read / (cache_read + fresh_input + cache_creation).
+  // 0~100%. 직원 시스템 프롬프트·카탈로그가 안정적이면 시간이 갈수록 올라가야 정상.
+  const cacheTotal = status
+    ? status.totalCacheReadTokens +
+      status.totalInputTokens // 이미 input + cache_create 합산 누적
+    : 0;
+  const cacheHitPct =
+    status && cacheTotal > 0
+      ? Math.round((status.totalCacheReadTokens / cacheTotal) * 100)
+      : 0;
+
   return (
     <footer className="flex items-center gap-3 border-t border-slate-800 bg-slate-950/80 px-3 py-1.5 text-[11px] text-slate-400">
       <span className="font-medium text-slate-200">{init?.projectName ?? '?'}</span>
@@ -71,6 +82,16 @@ export function StatusBar({ init, status }: Props) {
           {status
             ? `↑${formatTokens(status.totalInputTokens)} ↓${formatTokens(status.totalOutputTokens)}`
             : '↑0 ↓0'}
+        </span>
+        <span title="cache read / (cache read + fresh input + cache creation)">
+          <span className="text-slate-500">cache</span>{' '}
+          <span className={cacheHitPct >= 50 ? 'text-emerald-400' : 'text-slate-300'}>
+            {cacheHitPct}%
+          </span>{' '}
+          <span className="text-slate-500">
+            (R {status ? formatTokens(status.totalCacheReadTokens) : '0'} / C{' '}
+            {status ? formatTokens(status.totalCacheCreationTokens) : '0'})
+          </span>
         </span>
         <span>
           <span className="text-slate-500">cost</span>{' '}
