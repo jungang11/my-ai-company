@@ -61,6 +61,15 @@ export type PMExitPayload = { exitCode: number };
 
 export type RosterEmployeeStatus = 'working' | 'done' | 'failed';
 
+export type SubSessionMetrics = {
+  model?: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheCreationTokens: number;
+  costUsd: number;
+};
+
 export type RosterUpdatePayload =
   | {
       kind: 'started';
@@ -70,6 +79,7 @@ export type RosterUpdatePayload =
       role: string;
       prompt: string;
       startedAt: number;
+      model?: string;
     }
   | {
       kind: 'chunk';
@@ -81,4 +91,5 @@ export type RosterUpdatePayload =
       sessionId: string;
       exitCode: number;
       endedAt: number;
+      metrics: SubSessionMetrics;
     };

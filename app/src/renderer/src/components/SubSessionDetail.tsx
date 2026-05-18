@@ -19,6 +19,12 @@ function formatDuration(startedAt: number, endedAt?: number): string {
   return `${Math.floor(s / 60)}m ${s % 60}s`;
 }
 
+function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
+
 export function SubSessionDetail({ row, onClose }: Props) {
   useEffect(() => {
     if (!row) return;
@@ -69,6 +75,37 @@ export function SubSessionDetail({ row, onClose }: Props) {
           <div className="text-[10px] uppercase tracking-wide text-slate-500">사장이 시킨 일감</div>
           <div className="mt-1 whitespace-pre-wrap text-sm text-slate-200">{row.prompt}</div>
         </section>
+
+        {(row.model || row.metrics) && (
+          <section className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-800 px-5 py-2 text-[11px] text-slate-400">
+            {row.model && (
+              <span>
+                <span className="text-slate-500">model</span>{' '}
+                <span className="text-emerald-400">
+                  {row.model.replace('claude-', '').replace('-20251001', '')}
+                </span>
+              </span>
+            )}
+            {row.metrics && (
+              <>
+                <span>
+                  <span className="text-slate-500">tok</span>{' '}
+                  ↑{formatTokens(row.metrics.inputTokens)} ↓
+                  {formatTokens(row.metrics.outputTokens)}
+                </span>
+                <span title="cache_read / cache_creation">
+                  <span className="text-slate-500">cache</span> R
+                  {formatTokens(row.metrics.cacheReadTokens)} / C
+                  {formatTokens(row.metrics.cacheCreationTokens)}
+                </span>
+                <span>
+                  <span className="text-slate-500">cost</span>{' '}
+                  ${row.metrics.costUsd.toFixed(4)}
+                </span>
+              </>
+            )}
+          </section>
+        )}
 
         <section className="flex flex-1 flex-col overflow-hidden">
           <div className="border-b border-slate-800 px-5 py-2 text-[10px] uppercase tracking-wide text-slate-500">

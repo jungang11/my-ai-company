@@ -72,6 +72,7 @@ export function App() {
             status: 'working',
             startedAt: update.startedAt,
             output: '',
+            ...(update.model ? { model: update.model } : {}),
           };
           return [...prev, row];
         }
@@ -88,6 +89,9 @@ export function App() {
                 status: update.exitCode === 0 ? 'done' : 'failed',
                 endedAt: update.endedAt,
                 exitCode: update.exitCode,
+                metrics: update.metrics,
+                // started 시점에 model 미상이었다면 done의 metrics.model로 채움
+                ...(r.model ? {} : update.metrics.model ? { model: update.metrics.model } : {}),
               }
             : r,
         );

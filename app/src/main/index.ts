@@ -87,6 +87,7 @@ function wireSpawnWatcher(): void {
         role: update.employee.role,
         prompt: update.prompt,
         startedAt: update.startedAt,
+        ...(update.employee.model ? { model: update.employee.model } : {}),
       };
     } else if (update.kind === 'chunk') {
       payload = { kind: 'chunk', sessionId: update.sessionId, text: update.text };
@@ -96,6 +97,7 @@ function wireSpawnWatcher(): void {
         sessionId: update.sessionId,
         exitCode: update.exitCode,
         endedAt: update.endedAt,
+        metrics: update.metrics,
       };
       // sub 세션이 정상 종료되면 PM에 자동 시스템 메시지 주입 — output.log 읽어 사장에게 보고.
       // PM이 busy면 큐에 적재, idle 되면 자동 flush.

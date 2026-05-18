@@ -8,6 +8,8 @@ import {
   SESSIONS_DIR,
   type SpawnRequest,
 } from '@core/spawn/protocol';
+import { StatusTracker } from '../status.js';
+import type { SubSessionMetrics } from '../../shared/ipc.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // __dirname = app/out/main → ../../.. = project root
@@ -28,7 +30,13 @@ type EmployeeDef = {
 export type SubSessionUpdate =
   | { kind: 'started'; sessionId: string; employee: EmployeeDef; prompt: string; startedAt: number }
   | { kind: 'chunk'; sessionId: string; text: string }
-  | { kind: 'done'; sessionId: string; exitCode: number; endedAt: number };
+  | {
+      kind: 'done';
+      sessionId: string;
+      exitCode: number;
+      endedAt: number;
+      metrics: SubSessionMetrics;
+    };
 
 export type SubSessionCallback = (update: SubSessionUpdate) => void;
 
@@ -95,6 +103,7 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
     shell: process.platform === 'win32',
   }) as ChildProcessWithoutNullStreams;
 
+  const tracker = new StatusTracker(`sub-${req.id}`);
   active.set(req.id, proc);
 
   cb({
@@ -114,7 +123,7 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
       const line = stdoutBuf.slice(0, nl).trim();
       stdoutBuf = stdoutBuf.slice(nl + 1);
       if (!line) continue;
-      handleLine(line, req.id, outputPath, cb);
+      handleLine(line, req.id, outputPath, cb, tracker);
     }
   });
 
@@ -129,17 +138,26 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
 
   proc.on('exit', (code) => {
     if (stdoutBuf.trim()) {
-      handleLine(stdoutBuf.trim(), req.id, outputPath, cb);
+      handleLine(stdoutBuf.trim(), req.id, outputPath, cb, tracker);
       stdoutBuf = '';
     }
     active.delete(req.id);
     const exitCode = code ?? -1;
+    const snap = tracker.snapshot();
+    const metrics: SubSessionMetrics = {
+      model: snap.model || undefined,
+      inputTokens: snap.totalInputTokens,
+      outputTokens: snap.totalOutputTokens,
+      cacheReadTokens: snap.totalCacheReadTokens,
+      cacheCreationTokens: snap.totalCacheCreationTokens,
+      costUsd: snap.totalCostUsd,
+    };
     writeFileSync(
       donePath,
-      JSON.stringify({ exitCode, endedAt: new Date().toISOString() }, null, 2),
+      JSON.stringify({ exitCode, endedAt: new Date().toISOString(), metrics }, null, 2),
       'utf-8',
     );
-    cb({ kind: 'done', sessionId: req.id, exitCode, endedAt: Date.now() });
+    cb({ kind: 'done', sessionId: req.id, exitCode, endedAt: Date.now(), metrics });
   });
 
   const inputMsg = {
@@ -155,6 +173,7 @@ function handleLine(
   sessionId: string,
   outputPath: string,
   cb: SubSessionCallback,
+  tracker: StatusTracker,
 ): void {
   let event: unknown;
   try {
@@ -164,6 +183,9 @@ function handleLine(
   }
   if (typeof event !== 'object' || event === null) return;
   const e = event as Record<string, unknown>;
+
+  // 모든 라인은 status tracker에 ingest — model/tokens/cost/rate-limit 추출.
+  tracker.ingest(e);
 
   if (e['type'] === 'stream_event') {
     const inner = e['event'] as Record<string, unknown> | undefined;
