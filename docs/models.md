@@ -5,6 +5,20 @@
 >
 > 갱신: 2026-05-18. 출처는 문서 하단.
 
+## ⚠️ Task tool 패턴 도입 후 모델 매핑 한계 (2026-05-18 추가)
+
+Phase 2에서 PM의 sub 직원 spawn을 **Claude Code의 Task tool**로 전환(파일 watcher 패턴 보조). 이로 인해 모델 매핑에 한계가 생김:
+
+- Claude Code Task tool의 `model` 파라미터는 **`sonnet` / `opus` / `haiku` enum**으로 hardcoded.
+- 즉 `.claude/agents/<id>.md`의 frontmatter에 `model: opus`만 지정 가능. **`opus-4-6` vs `opus-4-7` 세분화 불가능**.
+- 우리 `core/employees/<id>.json`의 `model: claude-opus-4-6` 같은 세분화 필드는 **Phase 3 외부 CLI 직원(Codex/Gemini)에서만 의미** — 그것들은 file-watcher 패턴으로 별도 process spawn하면서 `--model` flag 직접 전달.
+
+PM(메인 process)은 `core/employees/pm.json`의 `model` 그대로 적용(`claude-opus-4-7`). sub-agent는 Task tool enum 한도.
+
+dev-1과 dev-arch 둘 다 `opus` (Task tool 한도) → 실질적 model 차이는 없음. 단 description/system prompt 차이로 PM이 라우팅 결정 — 어려운 작업은 dev-arch에 분배. 시연상 차별화 유지.
+
+향후 Anthropic이 Task tool model에 full model id 지원하면 그때 dev-1/dev-arch 분리 의미 복원.
+
 ---
 
 ## 1. 모델 카탈로그 (실측 벤치마크 + 가격)
