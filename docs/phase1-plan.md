@@ -43,6 +43,15 @@
 ### ✅ PR6.5 — `app: 하단 statusbar` (S)
 완료. 커밋 `54d451f`. project · branch · model · ctx · token · cost · 5h reset. stream-json result/rate_limit_event 파싱.
 
+### ✅ PR7 — `core+app: PM이 sub 결과 read해서 사장 자동 보고` (M)
+완료. 커밋 `bc8242a`. systemQueue + enqueueSystemMessage — sub done 시 app이 PM에 자동 시그널 주입. PM이 output.log Read 후 통합 보고. 본질 시나리오 한 사이클 완성.
+
+### ✅ PR8 — `회사 구조 — 직군 다양화 + 자율 분배 + 모델 매핑` (M, 4 commit)
+- `35b0483` (8a): 직원 스키마 확장 (model/effort) + planner-1/qa-1 신규 + docs/models.md.
+- `2b07552` (8b): PM 자율 분배 모드 + 직원 카탈로그 자동 주입 + PM JSON live-reload.
+- `9ca0f91` (8c): models.md 리서치 기반 전면 갱신 (벤치마크/공식가이드/커뮤니티 사례 11개 link).
+- `7e4cd20` (8d): effort max→xhigh 일괄 + dev-arch(Opus 4.7) 신규.
+
 ---
 
 ### PR3 — `app: 사장-PM 채팅 패널 (정적 UI)` (M) — *완료, 위 ✅ 참조*
@@ -157,12 +166,13 @@ PM에게 줄 시스템 프롬프트 업데이트: "sub 세션이 필요하면 `w
 
 ## 작업량 합계
 
-- ✅ 완료: 3S + 5M (PR1, PR2, PR3, PR4, PR5a, PR5b, PR6, PR6.5)
-- 🟡 남은: **1M (PR7)** — 본질 시나리오 완성.
+- ✅ 완료: 3S + 9M (PR1~PR8d 총 13 commit, Phase 0 docs 포함)
+- 🟢 **Phase 1 본질 시나리오 + 회사 구조 완성**.
+- 🟡 남은: **시연 검증** (사장 personal 시간) + **토큰 최적화 라운드** (Phase 1 마무리 또는 Phase 2 진입 전).
 
 ## 다음 한 가지
 
-PR7 — PM이 `workspace/sessions/<id>/output.log` + `done` 마커를 read해서 사장에게 보고. 이게 들어가야 사장 → PM → dev → PM → 사장 한 사이클 완성. 자세한 시작점은 `docs/PROGRESS.md` 참조.
+`docs/PROGRESS.md` 참조 — Phase 1 마무리 시연 시나리오 ("README에서 단어수+줄수 동시에" 같이 PM 자율 분할 검증).
 
 ---
 
