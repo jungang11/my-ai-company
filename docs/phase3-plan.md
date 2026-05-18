@@ -1,8 +1,22 @@
-# Phase 3 작업 분해 (Draft)
+# Phase 3 작업 분해 (확정 — 부분 진행)
 
-> 사장 검토 후 확정. Phase 2 시연 검증 통과 이후 진입.
+> 사장 결정 반영 (2026-05-18): **Codex/Gemini/Figma MCP 패스**, 나머지(PR5/PR6)만 진행.
 >
-> Phase 3 = **다양화** (README 로드맵). 코딩 백엔드(Codex/Gemini) + 디자인 직원(Figma MCP) + 누적 비용 가시화.
+> Phase 3 = 다양화 중 외부 CLI 직원 + 디자인 직원은 보류. 누적 비용 + 영속 read만 흡수.
+
+## ✅ 진행 완료
+
+- **PR6** (`06152cf`): workspace/sessions 영속 read + 앱 재시작 시 historical 카드 복원.
+- **PR5 minimal** (`cab0aa5`): 직원 명부 row에 누적 spawn/tokens 표시 (별도 UsagePanel 보류).
+
+## ❌ 보류 (사장 결정)
+
+- PR1 다중 CLI 백엔드 추상화 — Codex/Gemini 없으면 의미 없음.
+- PR2 dev-codex (OpenAI Codex CLI)
+- PR3 dev-gemini (Google Gemini CLI)
+- PR4 Figma MCP + designer-1
+
+추후 사장이 외부 CLI 활용 의사 생기면 그때 PR1~PR4 재개.
 
 ---
 
