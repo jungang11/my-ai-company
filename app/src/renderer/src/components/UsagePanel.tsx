@@ -1,12 +1,15 @@
-import { useEffect, useMemo } from 'react';
-import type { EmployeeProfile } from '../../../shared/ipc';
+import { useEffect, useMemo, useState } from 'react';
+import type { EmployeeProfile, QuarterMeta } from '../../../shared/ipc';
 import type { EmployeeRow } from '../state/employee-store';
 
 type Props = {
   rows: EmployeeRow[];
   profiles: EmployeeProfile[];
+  quarter: QuarterMeta | null;
   onClose: () => void;
 };
+
+type Scope = 'total' | 'quarter';
 
 type Usage = {
   spawns: number;
@@ -54,7 +57,7 @@ const ROLE_COLOR: Record<string, string> = {
   잡일: 'text-slate-300',
 };
 
-export function UsagePanel({ rows, profiles, onClose }: Props) {
+export function UsagePanel({ rows, profiles, quarter, onClose }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -63,10 +66,17 @@ export function UsagePanel({ rows, profiles, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const [scope, setScope] = useState<Scope>('total');
+  const quarterSet = useMemo(
+    () => (quarter ? new Set(quarter.sessionIds) : null),
+    [quarter],
+  );
+
   const usageByEmployee = useMemo(() => {
     const map = new Map<string, Usage>();
     for (const r of rows) {
       if (!r.metrics) continue;
+      if (scope === 'quarter' && quarterSet && !quarterSet.has(r.sessionId)) continue;
       const cur = map.get(r.employeeId) ?? defaultUsage();
       cur.spawns += 1;
       cur.inputTokens += r.metrics.inputTokens;
@@ -77,7 +87,7 @@ export function UsagePanel({ rows, profiles, onClose }: Props) {
       map.set(r.employeeId, cur);
     }
     return map;
-  }, [rows]);
+  }, [rows, scope, quarterSet]);
 
   // PM 본인 + sub 직원 모두 노출. PM은 다른 시스템 (메인 channel)이라 아직 데이터 X.
   const items = profiles
@@ -115,16 +125,45 @@ export function UsagePanel({ rows, profiles, onClose }: Props) {
           <div>
             <div className="text-sm font-medium text-slate-100">직원 사용량</div>
             <div className="text-[10px] text-slate-500">
-              세션 누적 + historical (workspace/sessions 영속 데이터 포함)
+              {scope === 'total'
+                ? '전체 누적 (historical 포함 — workspace/sessions 영속 데이터)'
+                : `현 분기 "${quarter?.title ?? 'Untitled'}" — ${quarter?.sessionIds.length ?? 0}건`}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-          >
-            닫기 (Esc)
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-md ring-1 ring-slate-700">
+              <button
+                type="button"
+                onClick={() => setScope('total')}
+                className={`rounded-l-md px-2 py-1 text-[10px] ${
+                  scope === 'total'
+                    ? 'bg-slate-700 text-slate-100'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                전체
+              </button>
+              <button
+                type="button"
+                onClick={() => setScope('quarter')}
+                disabled={!quarter}
+                className={`rounded-r-md px-2 py-1 text-[10px] ${
+                  scope === 'quarter'
+                    ? 'bg-amber-700/60 text-amber-100'
+                    : 'text-slate-400 hover:text-slate-200 disabled:opacity-50'
+                }`}
+              >
+                현 분기
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+            >
+              닫기 (Esc)
+            </button>
+          </div>
         </header>
 
         <section className="flex-1 overflow-y-auto px-5 py-3">

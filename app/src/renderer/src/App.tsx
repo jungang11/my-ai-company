@@ -223,7 +223,12 @@ export function App() {
       <StatusBar init={statusInit} status={status} quarter={currentQuarter} />
       <SubSessionDetail row={selectedRow} onClose={() => setSelectedSessionId(null)} />
       {usageOpen && (
-        <UsagePanel rows={roster} profiles={profiles} onClose={() => setUsageOpen(false)} />
+        <UsagePanel
+          rows={roster}
+          profiles={profiles}
+          quarter={currentQuarter}
+          onClose={() => setUsageOpen(false)}
+        />
       )}
       {officeOpen && (
         <PixelOffice
