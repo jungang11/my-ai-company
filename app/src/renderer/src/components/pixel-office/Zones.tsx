@@ -2,9 +2,14 @@
 // 출처: docs/skills/pixel-office-design.md 패턴 D.
 type Props = {
   meetingMode: boolean;
+  retroMode: boolean;
 };
 
-export function Zones({ meetingMode }: Props) {
+export function Zones({ meetingMode, retroMode }: Props) {
+  // 회의실 border 색 — 회의 emerald, 회고 rose, idle amber.
+  const meetingBorder = retroMode
+    ? 'inset 0 0 0 2px #f43f5ecc'
+    : 'inset 0 0 0 2px #10b981cc';
   return (
     <>
       <div
@@ -16,9 +21,7 @@ export function Zones({ meetingMode }: Props) {
           height: '36%',
           background: '#fef9c3',
           opacity: meetingMode ? 0.85 : 0.55,
-          boxShadow: meetingMode
-            ? 'inset 0 0 0 2px #10b981cc'
-            : 'inset 0 0 0 1px #fbbf24aa',
+          boxShadow: meetingMode ? meetingBorder : 'inset 0 0 0 1px #fbbf24aa',
         }}
         aria-label="회의실"
       />
@@ -26,7 +29,12 @@ export function Zones({ meetingMode }: Props) {
         className="pointer-events-none absolute text-[9px] font-medium text-amber-800"
         style={{ left: '68%', top: '11%' }}
       >
-        회의실 {meetingMode && <span className="text-emerald-700">· 회의 중</span>}
+        회의실{' '}
+        {meetingMode && (
+          <span className={retroMode ? 'text-rose-700' : 'text-emerald-700'}>
+            · {retroMode ? '회고 중' : '회의 중'}
+          </span>
+        )}
       </div>
 
       <div

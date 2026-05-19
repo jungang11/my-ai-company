@@ -207,7 +207,7 @@ export function PixelOffice({
           <div className="relative h-full w-full overflow-hidden rounded-lg ring-2 ring-amber-950 shadow-2xl">
             <Floor />
             <Walls />
-            <Zones meetingMode={meetingMode} />
+            <Zones meetingMode={meetingMode} retroMode={retroMode} />
             <Whiteboard x={82} y={14} quarter={quarter} />
             <MeetingTable x={82} y={30} />
             <WaterCooler x={75} y={66} />
@@ -250,10 +250,10 @@ export function PixelOffice({
               );
             })}
 
-            {/* 사장 캐릭터 — 입구 옆 default, 회의 모드 시 회의실 입구 옆 합류 */}
+            {/* 사장 캐릭터 — 입구 옆 default. 회의 모드 시 회의실 zone 바로 아래(입구쪽)에 서서 PM과 대면 — 회의 테이블 둘레 6명 자리 안 침범. */}
             <WorkerAtSeat
-              x={meetingMode ? 68 : 88}
-              y={meetingMode ? 30 : 50}
+              x={meetingMode ? 82 : 88}
+              y={meetingMode ? 50 : 50}
               role="Boss"
               name="사장"
               working={false}
