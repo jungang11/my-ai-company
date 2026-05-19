@@ -190,7 +190,9 @@ export function App() {
       )}
       {officeOpen && (
         <PixelOffice
-          pmWorking={pmPending || roster.some((r) => r.status === 'working')}
+          pmPending={pmPending}
+          roster={roster}
+          profiles={profiles}
           onClose={() => setOfficeOpen(false)}
         />
       )}

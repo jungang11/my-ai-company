@@ -1,14 +1,38 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import type { EmployeeProfile } from '../../../shared/ipc';
+import type { EmployeeRow } from '../state/employee-store';
 import { Desk } from './pixel-office/Desk';
 import { Floor } from './pixel-office/Floor';
 import { Walls } from './pixel-office/Walls';
+import type { Role } from './pixel-office/palette';
 
 type Props = {
-  pmWorking: boolean;
+  pmPending: boolean;
+  roster: EmployeeRow[];
+  profiles: EmployeeProfile[];
   onClose: () => void;
 };
 
-export function PixelOffice({ pmWorking, onClose }: Props) {
+type Seat = {
+  employeeId: string;
+  name: string;
+  role: Role;
+  x: number;
+  y: number;
+};
+
+// 6직군 좌석 배치 — 위 row: PM 중앙 + Engineer 좌 + Architect 우
+//                  아래 row: Planner 좌 + Utility 중앙 + QA 우
+const SEATS: readonly Seat[] = [
+  { employeeId: 'dev-1', name: '김개발', role: 'Engineer', x: 22, y: 35 },
+  { employeeId: 'pm', name: '박PM', role: 'PM', x: 50, y: 35 },
+  { employeeId: 'dev-arch', name: '박아키', role: 'Architect', x: 78, y: 35 },
+  { employeeId: 'planner-1', name: '이기획', role: 'Planner', x: 22, y: 75 },
+  { employeeId: 'utility-1', name: '막내', role: 'Utility', x: 50, y: 75 },
+  { employeeId: 'qa-1', name: '정검증', role: 'QA', x: 78, y: 75 },
+];
+
+export function PixelOffice({ pmPending, roster, profiles, onClose }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -16,6 +40,28 @@ export function PixelOffice({ pmWorking, onClose }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // 직원별 working 여부 — PM은 pmPending(응답 생성 중) OR 본인 roster row(드물게)
+  const workingMap = useMemo(() => {
+    const map: Record<string, boolean> = { pm: pmPending };
+    for (const r of roster) {
+      if (r.status === 'working') {
+        map[r.employeeId] = true;
+      }
+    }
+    return map;
+  }, [pmPending, roster]);
+
+  // 직원별 active 여부 — 비활성은 흐릿하게 (책상은 있지만 캐릭터 opacity 낮춤)
+  const activeMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const p of profiles) {
+      map[p.id] = p.active;
+    }
+    return map;
+  }, [profiles]);
+
+  const workingCount = Object.values(workingMap).filter(Boolean).length;
 
   return (
     <div
@@ -30,7 +76,7 @@ export function PixelOffice({ pmWorking, onClose }: Props) {
           <div>
             <div className="text-sm font-medium text-slate-100">사무실</div>
             <div className="text-[10px] text-slate-500">
-              Phase 4 PR2.1 — 카이로 톤 (비례 +1px / 책상 5종 디테일 / 컴포넌트 분리) · PM 1명. PR2.2에서 5명 + 셔츠 5색.
+              Phase 4 PR2.2 — 6직군 배치 + 셔츠 색 식별 · 작업 중 {workingCount}명
             </div>
           </div>
           <button
@@ -45,17 +91,42 @@ export function PixelOffice({ pmWorking, onClose }: Props) {
           <div className="relative h-full w-full overflow-hidden rounded-lg ring-2 ring-amber-950 shadow-2xl">
             <Floor />
             <Walls />
-            <Desk x={50} y={55} role="PM" name="박PM" working={pmWorking} />
+            {SEATS.map((seat) => {
+              const active = activeMap[seat.employeeId] ?? true;
+              return (
+                <div
+                  key={seat.employeeId}
+                  style={{ opacity: active ? 1 : 0.35 }}
+                  className="transition-opacity"
+                >
+                  <Desk
+                    x={seat.x}
+                    y={seat.y}
+                    role={seat.role}
+                    name={seat.name}
+                    working={!!workingMap[seat.employeeId]}
+                  />
+                </div>
+              );
+            })}
           </div>
         </section>
-        <footer className="border-t border-slate-800 px-5 py-2 text-[10px] text-slate-500">
-          PM 상태:{' '}
-          <span className={pmWorking ? 'text-emerald-400' : 'text-slate-400'}>
-            {pmWorking ? '작업 중 (응답 생성 또는 sub-agent spawn)' : 'idle (사장 메시지 대기)'}
+        <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800 px-5 py-2 text-[10px] text-slate-500">
+          <span>
+            PM:{' '}
+            <span className={pmPending ? 'text-emerald-400' : 'text-slate-400'}>
+              {pmPending ? '응답 생성 중' : 'idle'}
+            </span>
           </span>
-          <span className="ml-auto float-right text-amber-700/80">
-            톤 reference: docs/skills/pixel-office-design.md
-          </span>
+          {SEATS.filter((s) => s.employeeId !== 'pm').map((s) => (
+            <span key={s.employeeId}>
+              {s.name}:{' '}
+              <span className={workingMap[s.employeeId] ? 'text-emerald-400' : 'text-slate-600'}>
+                {workingMap[s.employeeId] ? '작업 중' : 'idle'}
+              </span>
+            </span>
+          ))}
+          <span className="ml-auto text-amber-700/80">skill: pixel-office-design</span>
         </footer>
       </div>
     </div>
