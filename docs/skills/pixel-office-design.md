@@ -2,7 +2,7 @@
 name: pixel-office-design
 description: 카이로소프트 게임 톤(Game Dev Story / 만지작 만지작 류) 탑다운 픽셀 사무실 디자인 가이드 — sprite 비례, 색 팔레트, 가구 디테일, 애니메이션 패턴, 회의 모드, 오픈소스 자료
 status: stable
-applies_to: app/src/renderer/src/components/pixel-office/*, Phase 4 PR2+ (6직군 배치 / 회의실 zone / 회의 모드 transition / 휴게실 / 향후 walk cycle)
+applies_to: app/src/renderer/src/components/pixel-office/*, Phase 4 PR2.1~2.9 (6직군+사장 / 회의 모드 walk+말풍선 / 시간 흐름 overlay)
 last_updated: 2026-05-19
 ---
 
@@ -423,11 +423,34 @@ CSS로 표현하기 어려운 1~3px 디테일은 모두 SVG `<rect>`로. 빈 공
 - 캐릭터만 700ms transition으로 회의 테이블 둘레로 이동, 책상은 빈 의자로 자리에 남음
 - header에 "● 회의 중" emerald 배지 + 회의실 zone border 강조
 
-### 사장 검증 (2026-05-19)
-PR2.2 OK ("좋다 좋아"), PR2.3 OK ("쭉 진행"), PR2.4 OK ("쭉 진행"). status: research → **stable**.
+### PR2.6 (`9fdf467`) — 회의 말풍선
+- WorkerAtSeat에 meetingMode + isPM prop
+- PM: `💬` 발언 풍선 (meeting-speak 1.2s scale+translate)
+- 나머지 5명: `···` 청취 풍선 (meeting-listen 2.5s opacity)
+- meetingMode 시 ⌨️ working 풍선 자동 숨김 (충돌 회피)
 
-### 다음 라운드 후보 (sprite sheet 도입 트리거)
-- 회의 중 직원 말풍선 (정수기 옆 옹기종기, 회의 발언 turn 등)
-- 직원이 책상 ↔ 회의실/휴게실 walk cycle 애니메이션 — sprite sheet 도입 검토 시점
-- 사장 캐릭터 (시점 인물 또는 별도 office floor walk)
-- 시간 흐름(낮/밤) overlay + 퇴근 후 빈 사무실
+### PR2.7 (`e874d39`) — walk cycle (SVG keyframe)
+- Character에 walking prop 추가, 우선순위 walking > working > idle
+- WorkerAtSeat가 meetingMode 전환 시 useState/useEffect로 700ms 동안 walking true
+- `@keyframes character-walk` 280ms: translateY -1.5px + rotate ±0.8deg
+- **sprite sheet 도입 보류** — skill 분석대로 SVG 2-frame keyframe으로 카이로 톤 walk 충분
+
+### PR2.8 (`b045bc8`) — 사장 캐릭터
+- palette Role 'Boss' 추가 (white #f8fafc shirt, gray #475569 hair)
+- default x=88/y=50 (입구 옆), meetingMode 시 x=68/y=30 (회의실 입구 옆 합류)
+- working=false 고정 (사장은 책상 X)
+
+### PR2.9 (`9101ce1`) — 시간 흐름 overlay
+- TimeOverlay.tsx 신규: morning/day/sunset/night 4단계
+- 자동 시스템 시간 (1분 polling) + 사장 manual override 토글 (cycle + ↺ 복귀)
+- mix-blend-mode: multiply로 floor + 캐릭터 + 가구 통일 분위기
+- header에 `🌅 아침·자동` 형식 버튼
+
+### 사장 검증 (2026-05-19)
+PR2.2~PR2.4 시연 OK ("좋다 좋아", "쭉 진행" 반복). PR2.5~2.9 자율 라운드는 "어차피 전부 다 할 거잖아? 추천 순서대로만 진행하자" 일괄 OK. status: research → **stable**.
+
+### 다음 라운드 후보 (사장 결정)
+- **실제 sub-agent ↔ 풍선 연동**: PM이 Task tool spawn 시 해당 직원 말풍선 색/내용 변화 (현재는 단순 `···`)
+- **sprite sheet 도입**: 다방향 walk(상하좌우) 또는 더 정밀한 frame이 필요해지면. 현재 SVG keyframe으로 충분이라 도입 보류.
+- **BGM/SFX**: 카이로 게임의 결정적 톤. 별도 skill 후보(`pixel-office-audio`).
+- **직원 성장 / 분기 게임 사이클**: 레벨/경험치/회고 — Phase 5 비전 영역.

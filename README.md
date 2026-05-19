@@ -94,12 +94,12 @@ payroll-os/
 - [ ] Figma MCP 디자인 직원 — **보류**.
 - [x] sub-agent 영속화 — `workspace/sessions/<taskId>/{output.log, done}` 저장 + 앱 시작 시 historical 카드 복원.
 
-### Phase 4 — 픽셀 사무실 (✅ 2026-05-19 PR2.4까지 통과, 카이로소프트 톤)
-- [x] 직원 캐릭터 6명 SVG sprite — 셔츠 6색(PM/Engineer/Architect/Planner/QA/Utility) 식별, SD ~2 head 비례
-- [x] 사무실 맵 — `pixel-office/{Character, Desk, Floor, Walls, MeetingTable, Whiteboard, Sofa, WaterCooler, Zones}.tsx`, 회의실+휴게실 zone overlay, 가구 디테일 (모니터/키보드/마우스/커피잔/포스트잇)
+### Phase 4 — 픽셀 사무실 (✅ 2026-05-19 PR2.9까지 통과, 카이로소프트 톤)
+- [x] 직원 캐릭터 6명 + 사장 1명 SVG sprite — 셔츠 7색(PM/Engineer/Architect/Planner/QA/Utility/Boss) 식별, SD ~2 head 비례
+- [x] 사무실 맵 — `pixel-office/{Character, Desk, Floor, Walls, MeetingTable, Whiteboard, Sofa, WaterCooler, Zones, TimeOverlay}.tsx`, 회의실+휴게실 zone overlay, 가구 디테일 (모니터/키보드/마우스/커피잔/포스트잇)
 - [x] 상태 → 캐릭터 매핑 — `roster.working` 자동 감지 → 책상에서 ⌨️ 풍선 + 모니터 깜빡임. 비활성 직원은 opacity 0.35 흐릿
-- [x] 회의 모드 — `회의:` prefix 메시지 시 6명 캐릭터가 700ms transition으로 회의 테이블 둘레 이동, header `● 회의 중` 배지
-- [~] 채팅 → 말풍선 — working 시 ⌨️ 풍선만. 회의 발언 말풍선은 다음 라운드
+- [x] 회의 모드 — `회의:` prefix 시 6명+사장이 walk cycle(어깨 bobbing+rotate 280ms)하며 회의 테이블 둘레로 700ms transition. header `● 회의 중` 배지. PM 머리 위 `💬` 발언 풍선, 나머지 `···` 청취 풍선
+- [x] 시간 흐름 — 시스템 시간 자동(1분 polling) + 사장 manual override 토글 (🌅 아침/☀ 낮/🌇 노을/🌙 밤, mix-blend multiply overlay)
 - 시각 영역 가이드는 [`docs/skills/pixel-office-design.md`](docs/skills/pixel-office-design.md)에 정착 (status: stable)
 
 ## 참고 프로젝트 (`references/`)
