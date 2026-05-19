@@ -33,6 +33,17 @@ export function QuarterPanel({ current, onClose, onStart }: Props) {
   const [description, setDescription] = useState('');
   const [pending, setPending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [archived, setArchived] = useState<QuarterMeta[]>([]);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    window.api
+      .listQuarters()
+      .then(setArchived)
+      .catch((e) => {
+        console.error('[QuarterPanel] listQuarters failed:', e);
+      });
+  }, []);
 
   async function submit() {
     const trimmed = title.trim();
@@ -48,6 +59,13 @@ export function QuarterPanel({ current, onClose, onStart }: Props) {
         ...(description.trim() ? { description: description.trim() } : {}),
       });
       onStart(next);
+      // archive 목록 갱신 (직전 분기가 새로 archive됨)
+      try {
+        const updated = await window.api.listQuarters();
+        setArchived(updated);
+      } catch {
+        // skip
+      }
       setTitle('');
       setDescription('');
       onClose();
@@ -66,7 +84,7 @@ export function QuarterPanel({ current, onClose, onStart }: Props) {
       onClick={onClose}
     >
       <div
-        className="flex w-full max-w-xl flex-col rounded-2xl bg-slate-900 ring-1 ring-slate-700 shadow-xl"
+        className="flex max-h-[85vh] w-full max-w-xl flex-col rounded-2xl bg-slate-900 ring-1 ring-slate-700 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-center justify-between border-b border-slate-800 px-5 py-3">
@@ -113,7 +131,7 @@ export function QuarterPanel({ current, onClose, onStart }: Props) {
           )}
         </section>
 
-        <section className="space-y-3 px-5 py-4">
+        <section className="space-y-3 border-b border-slate-800 px-5 py-4">
           <div className="text-[10px] uppercase tracking-wide text-slate-500">새 분기 시작</div>
           <div className="text-[10px] text-slate-500">
             현재 분기는 자동으로 archive에 보존 (workspace/quarters/&lt;quarterId&gt;.json).
@@ -151,6 +169,57 @@ export function QuarterPanel({ current, onClose, onStart }: Props) {
               {pending ? '시작 중...' : '새 분기 시작'}
             </button>
           </div>
+        </section>
+
+        <section className="flex-1 overflow-y-auto px-5 py-4">
+          <div className="mb-2 flex items-baseline justify-between">
+            <div className="text-[10px] uppercase tracking-wide text-slate-500">
+              지난 분기 ({archived.length})
+            </div>
+            {archived.length > 3 && (
+              <button
+                type="button"
+                onClick={() => setShowAll((v) => !v)}
+                className="text-[10px] text-slate-500 hover:text-slate-300"
+              >
+                {showAll ? '접기' : '전부 보기'}
+              </button>
+            )}
+          </div>
+          {archived.length === 0 ? (
+            <div className="text-xs text-slate-600">archive 없음 — 새 분기 시작 시 직전 분기가 자동 보존.</div>
+          ) : (
+            <div className="space-y-2">
+              {(showAll ? archived : archived.slice(0, 3)).map((q) => (
+                <div
+                  key={q.quarterId}
+                  className="rounded-md bg-slate-950/50 p-2.5 ring-1 ring-slate-800"
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="truncate text-sm font-medium text-slate-200">
+                      {q.title || 'Untitled'}
+                    </span>
+                    <span className="shrink-0 text-[10px] text-slate-500">
+                      {q.sessionIds.length}건
+                    </span>
+                  </div>
+                  {q.description && (
+                    <div className="mt-0.5 truncate text-[11px] text-slate-400">
+                      {q.description}
+                    </div>
+                  )}
+                  <div className="mt-1 text-[10px] text-slate-600">
+                    {formatDate(q.startedAt)} → {q.endedAt ? formatDate(q.endedAt) : '진행 중'}
+                  </div>
+                  {q.retrospective && (
+                    <div className="mt-1.5 line-clamp-2 text-[11px] text-slate-300">
+                      {q.retrospective}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>
