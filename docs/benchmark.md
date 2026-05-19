@@ -192,6 +192,71 @@ Electron 33 → 34 마이그레이션 시 breaking change가 있는지 리서치
 
 ---
 
+## S9 — 분기 시작 (Phase 5 분기 사이클)
+
+**준비**:
+1. 좌측 사이드바 하단 "분기 관리 →" 클릭.
+2. 모달 열림 → "새 분기 시작" 폼:
+   - title: `Phase 6 인공지능 직원 추가`
+   - description: `Codex/Gemini/Figma 직원 도입 결정 + 멀티 모델 시연 만들기`
+3. "새 분기 시작" 버튼.
+
+**기대 동작**:
+- StatusBar 하단에 `분기: Phase 6 인공지능 직…` amber 표시
+- 사무실 모달 열면 화이트보드(우상)에 분기 title + 진척 bar(0%) + amber pulse cue 3초
+- PM 채팅에 자동 시스템 메시지 응답: `분기 'Phase 6 인공지능 직원 추가' 인지함, 다음 일감부터 반영` 류 한 줄
+
+**평가 기준**:
+- ✅ StatusBar/화이트보드/PM 응답 3개 모두 갱신
+- ✅ amber pulse 3초 cue 보임
+- ✗ PM 응답 없음, 또는 길게 늘어놓음
+
+---
+
+## S10 — 회고: prefix (분기 회고 자동 처리)
+
+**전제**: S9 분기 시작 후, S1~S5 일감 몇 개 보낸 상태(누적 일감 3~5건). 사무실에 직원별 분기 spawn 건수 표시되어 있음.
+
+**메시지**:
+```
+회고: 이 분기 동안 어떤 일감이 진행됐고 목표 달성도 어땠는지 알려줘
+```
+
+**기대 동작**:
+- App.tsx가 메시지 끝에 `[app 자동 첨부: 현 분기 정보]` 인라인 첨부
+- 6명+사장이 회의 테이블로 walk cycle 이동
+- header `● 회의 중` 배지 + 회의실 zone amber border
+- PM이 planner-1 + qa-1 동시 Task tool spawn
+- 두 직원 결과 받은 후 PM 통합 보고: 회고 한 단락 + 달성도(PASS/부분/FAIL) + 다음 분기 추천 한 줄
+
+**평가 기준**:
+- ✅ 2+ 명 동시 spawn (planner-1 + qa-1 필수)
+- ✅ 회의실 visual 활성 (캐릭터 이동 + 배지)
+- ✅ PM 응답이 회고 단락 + 달성도 한 줄로 정리
+- ✗ 1명만 spawn / 추상 / 분기 정보 무시
+
+---
+
+## S11 — 분기 archive 자동 영속화
+
+**전제**: S10 회고 메시지 + PM 응답 받음.
+
+**준비**:
+1. "분기 관리 →" 다시 클릭.
+2. 새 분기 시작 — title: `다음 분기 (테스트)` 정도, "새 분기 시작".
+
+**기대 동작**:
+- 모달이 닫혔다 다시 열면 "지난 분기 (1)" 섹션에 직전 분기 카드 등장
+- 카드 내용: title / description / 시작~종료 시점 / 누적 일감 N건 / **retrospective 본문 line-clamp-2 미리보기**
+- retrospective preview에 S10에서 PM이 작성한 회고 단락의 첫 줄 정도
+
+**평가 기준**:
+- ✅ archive 카드에 retrospective 텍스트 자동 채워짐
+- ✅ 누적 일감 N건 그대로 보존
+- ✗ retrospective 빈칸 / archive 카드 없음
+
+---
+
 ## 합격 기준
 
 | 시나리오 | 통과 조건 |
@@ -200,8 +265,11 @@ Electron 33 → 34 마이그레이션 시 breaking change가 있는지 리서치
 | S6 회의 | 3+ 명 동시 spawn + 회의 visual |
 | S7 함정 | utility-1 회피 |
 | S8 직접 답 | Task tool 호출 X |
+| S9 분기 시작 | StatusBar/화이트보드/PM 응답 3개 갱신 |
+| S10 회고 | planner-1+qa-1 동시 spawn + 통합 보고 |
+| S11 archive | retrospective 자동 영속 |
 
-**전체 PASS**: 8개 중 7개 이상 ✅. 6개 이하면 시스템 프롬프트 재조정.
+**전체 PASS**: 11개 중 9개 이상 ✅. 8개 이하면 시스템 프롬프트 또는 분기 사이클 코드 재조정.
 
 ---
 
