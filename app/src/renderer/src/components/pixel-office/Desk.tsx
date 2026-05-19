@@ -95,7 +95,10 @@ export function WorkerAtSeat({
   level,
   quarterSpawns,
 }: WorkerProps) {
-  const effectiveWorking = working && !meetingMode;
+  // 회의 모드 시에도 working이면 실제 일감 풍선(bubbleText) 우선 표시.
+  // 회의 풍선(💬/···)은 idle인 회의 참석자에게만.
+  const showWorkBubble = working && !!bubbleText;
+  const showMeetingBubble = meetingMode && !showWorkBubble;
   // meetingMode 전환 시 700ms walk cycle (transition duration과 동일).
   const [walking, setWalking] = useState(false);
   useEffect(() => {
@@ -109,7 +112,7 @@ export function WorkerAtSeat({
       style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
     >
       <div className="relative flex flex-col items-center">
-        {meetingMode && (
+        {showMeetingBubble && (
           <div
             className={`absolute -top-7 z-10 flex items-center justify-center rounded-md bg-white px-1.5 py-0.5 text-[9px] text-slate-700 shadow-sm ring-1 ring-slate-400 ${
               isPM ? 'meeting-bubble-speak' : 'meeting-bubble-listen'
@@ -120,9 +123,9 @@ export function WorkerAtSeat({
         )}
         <Character
           role={role}
-          working={effectiveWorking}
+          working={working}
           walking={walking}
-          bubbleText={meetingMode ? undefined : bubbleText}
+          bubbleText={showWorkBubble ? bubbleText : undefined}
         />
         <div className="mt-1 flex items-center gap-1 rounded-sm bg-slate-900/90 px-1.5 py-0.5 text-[9px] font-medium text-slate-100 shadow-sm ring-1 ring-slate-700">
           <span>{name}</span>
