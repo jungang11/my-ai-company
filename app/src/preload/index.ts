@@ -4,6 +4,7 @@ import {
   type EmployeeProfile,
   type PMExitPayload,
   type PMOutputPayload,
+  type QuarterMeta,
   type RosterUpdatePayload,
   type StatusInit,
   type StatusSnapshot,
@@ -42,6 +43,10 @@ const api = {
     ipcRenderer.on(IPC.employeeChanged, handler);
     return () => ipcRenderer.off(IPC.employeeChanged, handler);
   },
+  fetchCurrentQuarter: (): Promise<QuarterMeta> => ipcRenderer.invoke(IPC.quartersCurrent),
+  startQuarter: (args: { title: string; description?: string }): Promise<QuarterMeta> =>
+    ipcRenderer.invoke(IPC.quartersStart, args),
+  listQuarters: (): Promise<QuarterMeta[]> => ipcRenderer.invoke(IPC.quartersList),
 };
 
 contextBridge.exposeInMainWorld('api', api);

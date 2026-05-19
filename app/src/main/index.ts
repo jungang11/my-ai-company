@@ -12,6 +12,7 @@ import {
 } from '../shared/ipc.js';
 import { enqueueSystemMessage, killPM, sendToPM, type PMCallbacks } from './employee/pm-runner.js';
 import { getEmployee, listEmployees, setActive, toPublic } from './employee/manager.js';
+import { wireQuartersHandlers } from './quarters/handlers.js';
 import { loadHistoricalSessions, persistSubSession } from './sessions/historical.js';
 import { killAllSubs } from './spawn/runner.js';
 import { startSpawnWatcher, stopSpawnWatcher } from './spawn/watcher.js';
@@ -243,6 +244,7 @@ app.whenReady().then(() => {
     wirePM();
     wireSpawnWatcher();
     wireEmployeeRegistry();
+    wireQuartersHandlers();
   });
 
   app.on('activate', () => {
@@ -252,6 +254,7 @@ app.whenReady().then(() => {
         wirePM();
         wireSpawnWatcher();
         wireEmployeeRegistry();
+        wireQuartersHandlers();
       });
     }
   });

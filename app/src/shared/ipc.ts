@@ -9,7 +9,21 @@ export const IPC = {
   employeeToggle: 'employee:toggle',
   employeeChanged: 'employee:changed',
   rosterHistorical: 'roster:historical',
+  quartersCurrent: 'quarters:current',
+  quartersStart: 'quarters:start',
+  quartersList: 'quarters:list',
 } as const;
+
+export type QuarterMeta = {
+  quarterId: string;
+  title: string;
+  description?: string;
+  startedAt: number;
+  endedAt?: number;
+  sessionIds: string[];
+  manualNotes?: string;
+  retrospective?: string;
+};
 
 export type EmployeeEffort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
