@@ -199,6 +199,7 @@ export function App() {
           roster={roster}
           profiles={profiles}
           onClose={() => setOfficeOpen(false)}
+          onSend={send}
         />
       )}
     </main>

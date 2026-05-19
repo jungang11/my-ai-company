@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { EmployeeProfile } from '../../../shared/ipc';
 import type { EmployeeRow } from '../state/employee-store';
+import { MessageInput } from './MessageInput';
 import { DeskSprite, WorkerAtSeat } from './pixel-office/Desk';
 import { Floor } from './pixel-office/Floor';
 import { MeetingTable } from './pixel-office/MeetingTable';
@@ -24,6 +25,7 @@ type Props = {
   roster: EmployeeRow[];
   profiles: EmployeeProfile[];
   onClose: () => void;
+  onSend: (text: string) => void;
 };
 
 type Seat = {
@@ -46,7 +48,14 @@ const SEATS: readonly Seat[] = [
   { employeeId: 'qa-1',      name: '정검증', role: 'QA',        x: 62, y: 72, meetingX: 90, meetingY: 38 },
 ];
 
-export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose }: Props) {
+export function PixelOffice({
+  pmPending,
+  meetingMode,
+  roster,
+  profiles,
+  onClose,
+  onSend,
+}: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -232,7 +241,7 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
             <TimeOverlay timeOfDay={timeOfDay} />
           </div>
         </section>
-        <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800 px-5 py-2 text-[10px] text-slate-500">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800 px-5 py-2 text-[10px] text-slate-500">
           <span>
             PM:{' '}
             <span className={pmPending ? 'text-emerald-400' : 'text-slate-400'}>
@@ -248,7 +257,8 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
             </span>
           ))}
           <span className="ml-auto text-amber-700/80">skill: pixel-office-design</span>
-        </footer>
+        </div>
+        <MessageInput onSend={onSend} />
       </div>
     </div>
   );
