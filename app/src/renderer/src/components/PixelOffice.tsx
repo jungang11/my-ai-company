@@ -22,6 +22,7 @@ import type { Role } from './pixel-office/palette';
 type Props = {
   pmPending: boolean;
   meetingMode: boolean;
+  retroMode: boolean;
   roster: EmployeeRow[];
   profiles: EmployeeProfile[];
   quarter: QuarterMeta | null;
@@ -52,6 +53,7 @@ const SEATS: readonly Seat[] = [
 export function PixelOffice({
   pmPending,
   meetingMode,
+  retroMode,
   roster,
   profiles,
   quarter,
@@ -163,9 +165,15 @@ export function PixelOffice({
               </div>
             </div>
             {meetingMode && (
-              <span className="rounded-full bg-emerald-900/40 px-2 py-0.5 text-[10px] font-medium text-emerald-300 ring-1 ring-emerald-700/60">
-                ● 회의 중
-              </span>
+              retroMode ? (
+                <span className="rounded-full bg-rose-900/40 px-2 py-0.5 text-[10px] font-medium text-rose-300 ring-1 ring-rose-700/60">
+                  ● 회고 중
+                </span>
+              ) : (
+                <span className="rounded-full bg-emerald-900/40 px-2 py-0.5 text-[10px] font-medium text-emerald-300 ring-1 ring-emerald-700/60">
+                  ● 회의 중
+                </span>
+              )
             )}
           </div>
           <div className="flex items-center gap-2">

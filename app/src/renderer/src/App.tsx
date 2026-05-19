@@ -72,6 +72,7 @@ export function App() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [pmPending, setPmPending] = useState(false);
   const [meetingMode, setMeetingMode] = useState(false);
+  const [retroMode, setRetroMode] = useState(false);
   const [usageOpen, setUsageOpen] = useState(false);
   const [officeOpen, setOfficeOpen] = useState(false);
   const [quarterOpen, setQuarterOpen] = useState(false);
@@ -209,6 +210,7 @@ export function App() {
     setMessages((prev) => [...prev, newMessage('boss', text)]);
     setPmPending(true);
     setMeetingMode(isMeeting || isRetro);
+    setRetroMode(isRetro);
     const payload = isRetro ? text + buildRetrospectiveContext() : text;
     try {
       await window.api.sendToPM(payload);
@@ -253,6 +255,7 @@ export function App() {
         <PixelOffice
           pmPending={pmPending}
           meetingMode={meetingMode}
+          retroMode={retroMode}
           roster={roster}
           profiles={profiles}
           quarter={currentQuarter}
