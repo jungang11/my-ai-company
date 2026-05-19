@@ -44,8 +44,11 @@ const api = {
     return () => ipcRenderer.off(IPC.employeeChanged, handler);
   },
   fetchCurrentQuarter: (): Promise<QuarterMeta> => ipcRenderer.invoke(IPC.quartersCurrent),
-  startQuarter: (args: { title: string; description?: string }): Promise<QuarterMeta> =>
-    ipcRenderer.invoke(IPC.quartersStart, args),
+  startQuarter: (args: {
+    title: string;
+    description?: string;
+    previousRetro?: string;
+  }): Promise<QuarterMeta> => ipcRenderer.invoke(IPC.quartersStart, args),
   listQuarters: (): Promise<QuarterMeta[]> => ipcRenderer.invoke(IPC.quartersList),
 };
 

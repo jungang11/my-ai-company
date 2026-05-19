@@ -44,10 +44,20 @@ export function wireQuartersHandlers(pmCallbacks: PMCallbacks): void {
 
   ipcMain.handle(
     IPC.quartersStart,
-    (_evt, args: { title: string; description?: string }): QuarterMeta => {
+    (
+      _evt,
+      args: { title: string; description?: string; previousRetro?: string },
+    ): QuarterMeta => {
       const prev = loadCurrentQuarter(projectRoot);
       if (prev) {
-        archiveQuarter(projectRoot, { ...prev, endedAt: Date.now() });
+        const archived: QuarterMeta = {
+          ...prev,
+          endedAt: Date.now(),
+          ...(args.previousRetro?.trim()
+            ? { retrospective: args.previousRetro.trim() }
+            : {}),
+        };
+        archiveQuarter(projectRoot, archived);
       }
       const next: QuarterMeta = {
         quarterId: newQuarterId(),

@@ -5,6 +5,8 @@ type Props = {
   current: QuarterMeta | null;
   onClose: () => void;
   onStart: (next: QuarterMeta) => void;
+  /** 직전 PM 회고 응답이 있으면 archive에 retrospective로 저장. App.tsx의 messages 기반. */
+  captureRetro?: () => string | undefined;
 };
 
 function formatDate(ms: number): string {
@@ -20,7 +22,7 @@ function durationLabel(ms: number): string {
   return '방금 시작';
 }
 
-export function QuarterPanel({ current, onClose, onStart }: Props) {
+export function QuarterPanel({ current, onClose, onStart, captureRetro }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -54,9 +56,11 @@ export function QuarterPanel({ current, onClose, onStart }: Props) {
     setPending(true);
     setErr(null);
     try {
+      const previousRetro = captureRetro?.();
       const next = await window.api.startQuarter({
         title: trimmed,
         ...(description.trim() ? { description: description.trim() } : {}),
+        ...(previousRetro ? { previousRetro } : {}),
       });
       onStart(next);
       // archive 목록 갱신 (직전 분기가 새로 archive됨)

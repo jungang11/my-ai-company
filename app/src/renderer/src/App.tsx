@@ -160,6 +160,25 @@ export function App() {
     }
   }
 
+  // 직전 PM 응답 중 "회고:" 사장 메시지 직후 PM 메시지를 회고로 캡처.
+  // 새 분기 시작 시 archive에 retrospective 필드로 저장하기 위함.
+  function captureLatestRetrospective(): string | undefined {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role !== 'boss') continue;
+      const t = m.text.trim();
+      if (t.startsWith('회고:') || t.startsWith('회고 ')) {
+        for (let j = i + 1; j < messages.length; j++) {
+          if (messages[j].role === 'pm') return messages[j].text.trim() || undefined;
+        }
+        return undefined;
+      }
+      // 다른 사장 메시지를 만나면 회고 응답 X
+      return undefined;
+    }
+    return undefined;
+  }
+
   function buildRetrospectiveContext(): string {
     if (!currentQuarter) return '';
     const set = new Set(currentQuarter.sessionIds);
@@ -246,6 +265,7 @@ export function App() {
           current={currentQuarter}
           onClose={() => setQuarterOpen(false)}
           onStart={(next) => setCurrentQuarter(next)}
+          captureRetro={captureLatestRetrospective}
         />
       )}
     </main>
