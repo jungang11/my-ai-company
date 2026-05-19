@@ -76,6 +76,27 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
     return map;
   }, [roster]);
 
+  // 직원별 누적 spawn+tokens → 5단계 레벨. PM은 사장 직속이라 Lv5 고정.
+  const levelMap = useMemo(() => {
+    const counts: Record<string, { spawns: number; tokens: number }> = {};
+    for (const r of roster) {
+      if (!r.metrics) continue;
+      const cur = counts[r.employeeId] ?? { spawns: 0, tokens: 0 };
+      cur.spawns += 1;
+      cur.tokens += r.metrics.inputTokens + r.metrics.outputTokens;
+      counts[r.employeeId] = cur;
+    }
+    const map: Record<string, number> = { pm: 5 };
+    for (const [id, c] of Object.entries(counts)) {
+      if (c.spawns >= 20 || c.tokens >= 100_000) map[id] = 5;
+      else if (c.spawns >= 8 || c.tokens >= 20_000) map[id] = 4;
+      else if (c.spawns >= 3 || c.tokens >= 5_000) map[id] = 3;
+      else if (c.spawns >= 1) map[id] = 2;
+      else map[id] = 1;
+    }
+    return map;
+  }, [roster]);
+
   const activeMap = useMemo(() => {
     const map: Record<string, boolean> = {};
     for (const p of profiles) {
@@ -190,6 +211,7 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
                     meetingMode={meetingMode}
                     isPM={seat.employeeId === 'pm'}
                     bubbleText={bubbleMap[seat.employeeId]}
+                    level={levelMap[seat.employeeId] ?? 1}
                   />
                 </div>
               );

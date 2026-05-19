@@ -77,6 +77,7 @@ type WorkerProps = {
   meetingMode: boolean;
   isPM: boolean;
   bubbleText?: string;
+  level?: number; // 1~5, Boss는 undefined로 표시 X
 };
 
 // 캐릭터 + 이름표 + 풍선. 회의 모드 시 회의실 좌표로 transition.
@@ -90,6 +91,7 @@ export function WorkerAtSeat({
   meetingMode,
   isPM,
   bubbleText,
+  level,
 }: WorkerProps) {
   const effectiveWorking = working && !meetingMode;
   // meetingMode 전환 시 700ms walk cycle (transition duration과 동일).
@@ -120,8 +122,11 @@ export function WorkerAtSeat({
           walking={walking}
           bubbleText={meetingMode ? undefined : bubbleText}
         />
-        <div className="mt-1 rounded-sm bg-slate-900/90 px-1.5 py-0.5 text-[9px] font-medium text-slate-100 shadow-sm ring-1 ring-slate-700">
-          {name}
+        <div className="mt-1 flex items-center gap-1 rounded-sm bg-slate-900/90 px-1.5 py-0.5 text-[9px] font-medium text-slate-100 shadow-sm ring-1 ring-slate-700">
+          <span>{name}</span>
+          {level !== undefined && (
+            <span className="text-[8px] text-amber-300">Lv{level}</span>
+          )}
         </div>
       </div>
     </div>
