@@ -160,14 +160,39 @@ export function App() {
     }
   }
 
+  function buildRetrospectiveContext(): string {
+    if (!currentQuarter) return '';
+    const set = new Set(currentQuarter.sessionIds);
+    const byEmployee: Record<string, number> = {};
+    for (const r of roster) {
+      if (set.has(r.sessionId)) {
+        byEmployee[r.employeeId] = (byEmployee[r.employeeId] ?? 0) + 1;
+      }
+    }
+    const dist = Object.entries(byEmployee)
+      .map(([k, v]) => `${k} ${v}건`)
+      .join(', ');
+    const desc = currentQuarter.description ? `description: ${currentQuarter.description}\n` : '';
+    const distStr = dist ? ` (직원별: ${dist})` : '';
+    return (
+      `\n\n[app 자동 첨부: 현 분기 정보]\n` +
+      `quarterId: ${currentQuarter.quarterId}\n` +
+      `title: ${currentQuarter.title}\n` +
+      desc +
+      `누적 일감: ${currentQuarter.sessionIds.length}건${distStr}`
+    );
+  }
+
   async function send(text: string) {
     const trimmed = text.trim();
     const isMeeting = trimmed.startsWith('회의:') || trimmed.startsWith('회의 ');
+    const isRetro = trimmed.startsWith('회고:') || trimmed.startsWith('회고 ');
     setMessages((prev) => [...prev, newMessage('boss', text)]);
     setPmPending(true);
-    setMeetingMode(isMeeting);
+    setMeetingMode(isMeeting || isRetro);
+    const payload = isRetro ? text + buildRetrospectiveContext() : text;
     try {
-      await window.api.sendToPM(text);
+      await window.api.sendToPM(payload);
     } catch (err) {
       setPmPending(false);
       const msg = err instanceof Error ? err.message : String(err);
