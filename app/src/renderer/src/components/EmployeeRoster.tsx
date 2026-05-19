@@ -86,7 +86,9 @@ export function EmployeeRoster({
           finished
             .slice(-6)
             .reverse()
-            .map((r) => <EmployeeCard key={r.sessionId} row={r} onOpen={onOpenSession} />)
+            .map((r) => (
+              <EmployeeCard key={r.sessionId} row={r} onOpen={onOpenSession} compact />
+            ))
         )}
       </section>
 
