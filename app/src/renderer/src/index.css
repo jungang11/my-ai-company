@@ -55,11 +55,24 @@ body,
   }
 }
 
+@keyframes character-walk {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.8deg);
+  }
+  50% {
+    transform: translateY(-1.5px) rotate(0.8deg);
+  }
+}
+
 .character-idle {
   animation: kairo-idle 1800ms ease-in-out infinite;
 }
 .character-working {
   animation: kairo-working 200ms linear infinite;
+}
+.character-walking {
+  animation: character-walk 280ms ease-in-out infinite;
 }
 .thought-bubble {
   animation: kairo-thought 1500ms ease-in-out infinite;

@@ -3,15 +3,22 @@ import { ROLE_PALETTE, SKIN, SKIN_SHADE, type Role } from './palette';
 type Props = {
   role: Role;
   working: boolean;
+  walking?: boolean;
 };
 
 // 카이로 톤 SD 비례 (~2 head): 머리 7px, 어깨 10px, 정면 ¾ 시점.
 // 출처: docs/skills/pixel-office-design.md 패턴 A.
-export function Character({ role, working }: Props) {
+// walking > working > idle 애니메이션 우선순위 (walk cycle: 이동 중 bobbing+rotate).
+export function Character({ role, working, walking }: Props) {
   const c = ROLE_PALETTE[role];
+  const animClass = walking
+    ? 'character-walking'
+    : working
+    ? 'character-working'
+    : 'character-idle';
   return (
     <div className="relative flex flex-col items-center">
-      {working && (
+      {working && !walking && (
         <div className="thought-bubble absolute -top-5 left-9 z-10 flex items-center justify-center rounded-md bg-white px-1.5 py-0.5 text-[8px] text-slate-700 shadow-sm ring-1 ring-slate-400">
           ⌨️
         </div>
@@ -21,7 +28,7 @@ export function Character({ role, working }: Props) {
         width="40"
         height="40"
         shapeRendering="crispEdges"
-        className={working ? 'character-working' : 'character-idle'}
+        className={animClass}
       >
         {/* 머리카락 (위/뒤) */}
         <rect x="3" y="1" width="10" height="2" fill={c.hair} />

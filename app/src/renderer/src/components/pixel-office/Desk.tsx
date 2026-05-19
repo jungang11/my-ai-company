@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Character } from './Character';
 import { DESK, type Role } from './palette';
 
@@ -81,6 +82,13 @@ type WorkerProps = {
 // 회의 모드일 땐 ⌨️ working 풍선 대신 회의 풍선(PM 💬 발언 / 나머지 ... 청취) 표시.
 export function WorkerAtSeat({ x, y, role, name, working, meetingMode, isPM }: WorkerProps) {
   const effectiveWorking = working && !meetingMode;
+  // meetingMode 전환 시 700ms walk cycle (transition duration과 동일).
+  const [walking, setWalking] = useState(false);
+  useEffect(() => {
+    setWalking(true);
+    const t = setTimeout(() => setWalking(false), 700);
+    return () => clearTimeout(t);
+  }, [meetingMode]);
   return (
     <div
       className="absolute transition-all duration-700 ease-in-out"
@@ -96,7 +104,7 @@ export function WorkerAtSeat({ x, y, role, name, working, meetingMode, isPM }: W
             {isPM ? '💬' : '···'}
           </div>
         )}
-        <Character role={role} working={effectiveWorking} />
+        <Character role={role} working={effectiveWorking} walking={walking} />
         <div className="mt-1 rounded-sm bg-slate-900/90 px-1.5 py-0.5 text-[9px] font-medium text-slate-100 shadow-sm ring-1 ring-slate-700">
           {name}
         </div>
