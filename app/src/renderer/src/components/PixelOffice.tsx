@@ -3,7 +3,12 @@ import type { EmployeeProfile } from '../../../shared/ipc';
 import type { EmployeeRow } from '../state/employee-store';
 import { Desk } from './pixel-office/Desk';
 import { Floor } from './pixel-office/Floor';
+import { MeetingTable } from './pixel-office/MeetingTable';
+import { Sofa } from './pixel-office/Sofa';
 import { Walls } from './pixel-office/Walls';
+import { WaterCooler } from './pixel-office/WaterCooler';
+import { Whiteboard } from './pixel-office/Whiteboard';
+import { Zones } from './pixel-office/Zones';
 import type { Role } from './pixel-office/palette';
 
 type Props = {
@@ -21,15 +26,15 @@ type Seat = {
   y: number;
 };
 
-// 6직군 좌석 배치 — 위 row: PM 중앙 + Engineer 좌 + Architect 우
-//                  아래 row: Planner 좌 + Utility 중앙 + QA 우
+// 6직군 좌석 배치 — 좌측 65% 영역에 모음. 우측 30%는 회의실/휴게실 zone.
+// 위 row: Engineer 좌 / PM 중앙 / Architect 우 — 아래 row: Planner 좌 / Utility 중앙 / QA 우
 const SEATS: readonly Seat[] = [
-  { employeeId: 'dev-1', name: '김개발', role: 'Engineer', x: 22, y: 35 },
-  { employeeId: 'pm', name: '박PM', role: 'PM', x: 50, y: 35 },
-  { employeeId: 'dev-arch', name: '박아키', role: 'Architect', x: 78, y: 35 },
-  { employeeId: 'planner-1', name: '이기획', role: 'Planner', x: 22, y: 75 },
-  { employeeId: 'utility-1', name: '막내', role: 'Utility', x: 50, y: 75 },
-  { employeeId: 'qa-1', name: '정검증', role: 'QA', x: 78, y: 75 },
+  { employeeId: 'dev-1', name: '김개발', role: 'Engineer', x: 18, y: 32 },
+  { employeeId: 'pm', name: '박PM', role: 'PM', x: 40, y: 32 },
+  { employeeId: 'dev-arch', name: '박아키', role: 'Architect', x: 62, y: 32 },
+  { employeeId: 'planner-1', name: '이기획', role: 'Planner', x: 18, y: 72 },
+  { employeeId: 'utility-1', name: '막내', role: 'Utility', x: 40, y: 72 },
+  { employeeId: 'qa-1', name: '정검증', role: 'QA', x: 62, y: 72 },
 ];
 
 export function PixelOffice({ pmPending, roster, profiles, onClose }: Props) {
@@ -76,7 +81,7 @@ export function PixelOffice({ pmPending, roster, profiles, onClose }: Props) {
           <div>
             <div className="text-sm font-medium text-slate-100">사무실</div>
             <div className="text-[10px] text-slate-500">
-              Phase 4 PR2.2 — 6직군 배치 + 셔츠 색 식별 · 작업 중 {workingCount}명
+              Phase 4 PR2.3 — 6직군 + 회의실/휴게실 zone + 가구 (회의 테이블/화이트보드/소파/식수기) · 작업 중 {workingCount}명
             </div>
           </div>
           <button
@@ -91,6 +96,11 @@ export function PixelOffice({ pmPending, roster, profiles, onClose }: Props) {
           <div className="relative h-full w-full overflow-hidden rounded-lg ring-2 ring-amber-950 shadow-2xl">
             <Floor />
             <Walls />
+            <Zones />
+            <Whiteboard x={82} y={18} />
+            <MeetingTable x={82} y={30} />
+            <WaterCooler x={75} y={64} />
+            <Sofa x={84} y={75} />
             {SEATS.map((seat) => {
               const active = activeMap[seat.employeeId] ?? true;
               return (
