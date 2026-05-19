@@ -1,7 +1,8 @@
+import { useEffect, useRef, useState } from 'react';
 import type { QuarterMeta } from '../../../../shared/ipc';
 
 // 화이트보드 sprite — 회의실 위쪽에 부착. 분기 목표/진척 표시 (PR4).
-// 출처: docs/skills/pixel-office-design.md 가구 디테일 + docs/phase5-plan.md PR4.
+// PR11: quarter.quarterId 변경 시 3초 amber pulse cue.
 
 type Props = {
   x: number;
@@ -19,12 +20,37 @@ export function Whiteboard({ x, y, quarter }: Props) {
   // 진척: 첫 10건은 0~100%. 이후도 100% 유지 (단순 시각).
   const progressPct = Math.min(100, sessions * 10);
 
+  // 분기 변경 시 3초 amber pulse cue. 첫 mount는 skip.
+  const isFirstMount = useRef(true);
+  const [pulse, setPulse] = useState(false);
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    if (!quarter) return;
+    setPulse(true);
+    const t = setTimeout(() => setPulse(false), 3000);
+    return () => clearTimeout(t);
+  }, [quarter?.quarterId]);
+
   return (
     <div
-      className="absolute"
-      style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
+      className="absolute transition-transform duration-300"
+      style={{
+        left: `${x}%`,
+        top: `${y}%`,
+        transform: `translate(-50%, -50%) scale(${pulse ? 1.15 : 1})`,
+      }}
     >
-      <div className="relative">
+      <div
+        className="relative transition-all duration-300"
+        style={{
+          filter: pulse
+            ? 'drop-shadow(0 0 6px #fbbf24) drop-shadow(0 0 12px #fbbf24)'
+            : 'none',
+        }}
+      >
         <svg viewBox="0 0 42 12" width="140" height="40" shapeRendering="crispEdges">
           <rect x="0" y="0" width="42" height="12" fill="#94a3b8" />
           <rect x="1" y="1" width="40" height="10" fill="#f8fafc" />
