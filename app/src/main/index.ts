@@ -244,7 +244,7 @@ app.whenReady().then(() => {
     wirePM();
     wireSpawnWatcher();
     wireEmployeeRegistry();
-    wireQuartersHandlers();
+    wireQuartersHandlers(pmCallbacks);
   });
 
   app.on('activate', () => {
@@ -254,7 +254,7 @@ app.whenReady().then(() => {
         wirePM();
         wireSpawnWatcher();
         wireEmployeeRegistry();
-        wireQuartersHandlers();
+        wireQuartersHandlers(pmCallbacks);
       });
     }
   });
