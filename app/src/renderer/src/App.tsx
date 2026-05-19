@@ -69,6 +69,7 @@ export function App() {
   const [profiles, setProfiles] = useState<EmployeeProfile[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [pmPending, setPmPending] = useState(false);
+  const [meetingMode, setMeetingMode] = useState(false);
   const [usageOpen, setUsageOpen] = useState(false);
   const [officeOpen, setOfficeOpen] = useState(false);
 
@@ -153,8 +154,11 @@ export function App() {
   }
 
   async function send(text: string) {
+    const trimmed = text.trim();
+    const isMeeting = trimmed.startsWith('회의:') || trimmed.startsWith('회의 ');
     setMessages((prev) => [...prev, newMessage('boss', text)]);
     setPmPending(true);
+    setMeetingMode(isMeeting);
     try {
       await window.api.sendToPM(text);
     } catch (err) {
@@ -191,6 +195,7 @@ export function App() {
       {officeOpen && (
         <PixelOffice
           pmPending={pmPending}
+          meetingMode={meetingMode}
           roster={roster}
           profiles={profiles}
           onClose={() => setOfficeOpen(false)}

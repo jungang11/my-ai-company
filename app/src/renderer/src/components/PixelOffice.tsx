@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import type { EmployeeProfile } from '../../../shared/ipc';
 import type { EmployeeRow } from '../state/employee-store';
-import { Desk } from './pixel-office/Desk';
+import { DeskSprite, WorkerAtSeat } from './pixel-office/Desk';
 import { Floor } from './pixel-office/Floor';
 import { MeetingTable } from './pixel-office/MeetingTable';
 import { Sofa } from './pixel-office/Sofa';
@@ -13,6 +13,7 @@ import type { Role } from './pixel-office/palette';
 
 type Props = {
   pmPending: boolean;
+  meetingMode: boolean;
   roster: EmployeeRow[];
   profiles: EmployeeProfile[];
   onClose: () => void;
@@ -22,22 +23,23 @@ type Seat = {
   employeeId: string;
   name: string;
   role: Role;
-  x: number;
+  x: number; // 책상 자리
   y: number;
+  meetingX: number; // 회의 테이블 둘레
+  meetingY: number;
 };
 
-// 6직군 좌석 배치 — 좌측 65% 영역에 모음. 우측 30%는 회의실/휴게실 zone.
-// 위 row: Engineer 좌 / PM 중앙 / Architect 우 — 아래 row: Planner 좌 / Utility 중앙 / QA 우
+// 회의 테이블 중심 x=82, y=30. 둘레 6명 — PM이 top center에서 주재.
 const SEATS: readonly Seat[] = [
-  { employeeId: 'dev-1', name: '김개발', role: 'Engineer', x: 18, y: 32 },
-  { employeeId: 'pm', name: '박PM', role: 'PM', x: 40, y: 32 },
-  { employeeId: 'dev-arch', name: '박아키', role: 'Architect', x: 62, y: 32 },
-  { employeeId: 'planner-1', name: '이기획', role: 'Planner', x: 18, y: 72 },
-  { employeeId: 'utility-1', name: '막내', role: 'Utility', x: 40, y: 72 },
-  { employeeId: 'qa-1', name: '정검증', role: 'QA', x: 62, y: 72 },
+  { employeeId: 'dev-1',     name: '김개발', role: 'Engineer',  x: 18, y: 32, meetingX: 74, meetingY: 22 },
+  { employeeId: 'pm',        name: '박PM',   role: 'PM',        x: 40, y: 32, meetingX: 82, meetingY: 17 },
+  { employeeId: 'dev-arch',  name: '박아키', role: 'Architect', x: 62, y: 32, meetingX: 90, meetingY: 22 },
+  { employeeId: 'planner-1', name: '이기획', role: 'Planner',   x: 18, y: 72, meetingX: 74, meetingY: 38 },
+  { employeeId: 'utility-1', name: '막내',   role: 'Utility',   x: 40, y: 72, meetingX: 82, meetingY: 43 },
+  { employeeId: 'qa-1',      name: '정검증', role: 'QA',        x: 62, y: 72, meetingX: 90, meetingY: 38 },
 ];
 
-export function PixelOffice({ pmPending, roster, profiles, onClose }: Props) {
+export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -46,7 +48,6 @@ export function PixelOffice({ pmPending, roster, profiles, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // 직원별 working 여부 — PM은 pmPending(응답 생성 중) OR 본인 roster row(드물게)
   const workingMap = useMemo(() => {
     const map: Record<string, boolean> = { pm: pmPending };
     for (const r of roster) {
@@ -57,7 +58,6 @@ export function PixelOffice({ pmPending, roster, profiles, onClose }: Props) {
     return map;
   }, [pmPending, roster]);
 
-  // 직원별 active 여부 — 비활성은 흐릿하게 (책상은 있지만 캐릭터 opacity 낮춤)
   const activeMap = useMemo(() => {
     const map: Record<string, boolean> = {};
     for (const p of profiles) {
@@ -78,11 +78,18 @@ export function PixelOffice({ pmPending, roster, profiles, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-center justify-between border-b border-slate-800 px-5 py-3">
-          <div>
-            <div className="text-sm font-medium text-slate-100">사무실</div>
-            <div className="text-[10px] text-slate-500">
-              Phase 4 PR2.3 — 6직군 + 회의실/휴게실 zone + 가구 (회의 테이블/화이트보드/소파/식수기) · 작업 중 {workingCount}명
+          <div className="flex items-center gap-2">
+            <div>
+              <div className="text-sm font-medium text-slate-100">사무실</div>
+              <div className="text-[10px] text-slate-500">
+                Phase 4 PR2.4 — 회의 모드 (caps prefix 시 직원 회의 테이블 이동) · 작업 중 {workingCount}명
+              </div>
             </div>
+            {meetingMode && (
+              <span className="rounded-full bg-emerald-900/40 px-2 py-0.5 text-[10px] font-medium text-emerald-300 ring-1 ring-emerald-700/60">
+                ● 회의 중
+              </span>
+            )}
           </div>
           <button
             type="button"
@@ -96,22 +103,36 @@ export function PixelOffice({ pmPending, roster, profiles, onClose }: Props) {
           <div className="relative h-full w-full overflow-hidden rounded-lg ring-2 ring-amber-950 shadow-2xl">
             <Floor />
             <Walls />
-            <Zones />
-            <Whiteboard x={82} y={18} />
+            <Zones meetingMode={meetingMode} />
+            <Whiteboard x={82} y={14} />
             <MeetingTable x={82} y={30} />
-            <WaterCooler x={75} y={64} />
-            <Sofa x={84} y={75} />
+            <WaterCooler x={75} y={66} />
+            <Sofa x={84} y={76} />
+
+            {/* 책상 sprite — 회의 모드여도 자리 유지 (빈 의자) */}
+            {SEATS.map((seat) => (
+              <DeskSprite
+                key={`desk-${seat.employeeId}`}
+                x={seat.x}
+                y={seat.y}
+                working={!meetingMode && !!workingMap[seat.employeeId]}
+              />
+            ))}
+
+            {/* 캐릭터 — 회의 모드 시 회의 테이블 둘레로 transition */}
             {SEATS.map((seat) => {
               const active = activeMap[seat.employeeId] ?? true;
+              const targetX = meetingMode ? seat.meetingX : seat.x;
+              const targetY = meetingMode ? seat.meetingY : seat.y - 8;
               return (
                 <div
-                  key={seat.employeeId}
-                  style={{ opacity: active ? 1 : 0.35 }}
+                  key={`worker-${seat.employeeId}`}
                   className="transition-opacity"
+                  style={{ opacity: active ? 1 : 0.35 }}
                 >
-                  <Desk
-                    x={seat.x}
-                    y={seat.y}
+                  <WorkerAtSeat
+                    x={targetX}
+                    y={targetY}
                     role={seat.role}
                     name={seat.name}
                     working={!!workingMap[seat.employeeId]}
