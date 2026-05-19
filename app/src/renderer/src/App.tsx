@@ -1,6 +1,7 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { Chat } from './components/Chat';
 import { EmployeeRoster } from './components/EmployeeRoster';
+import { PixelOffice } from './components/PixelOffice';
 import { StatusBar } from './components/StatusBar';
 import { SubSessionDetail } from './components/SubSessionDetail';
 import { UsagePanel } from './components/UsagePanel';
@@ -69,6 +70,7 @@ export function App() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [pmPending, setPmPending] = useState(false);
   const [usageOpen, setUsageOpen] = useState(false);
+  const [officeOpen, setOfficeOpen] = useState(false);
 
   useEffect(() => {
     if (!window.api) {
@@ -175,6 +177,7 @@ export function App() {
           onToggle={handleToggle}
           onOpenSession={(row) => setSelectedSessionId(row.sessionId)}
           onOpenUsage={() => setUsageOpen(true)}
+          onOpenOffice={() => setOfficeOpen(true)}
         />
         <div className="flex flex-1 flex-col ring-1 ring-slate-800">
           <Chat messages={messages} onSend={send} pending={pmPending} />
@@ -184,6 +187,12 @@ export function App() {
       <SubSessionDetail row={selectedRow} onClose={() => setSelectedSessionId(null)} />
       {usageOpen && (
         <UsagePanel rows={roster} profiles={profiles} onClose={() => setUsageOpen(false)} />
+      )}
+      {officeOpen && (
+        <PixelOffice
+          pmWorking={pmPending || roster.some((r) => r.status === 'working')}
+          onClose={() => setOfficeOpen(false)}
+        />
       )}
     </main>
   );

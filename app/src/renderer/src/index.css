@@ -14,3 +14,21 @@ body,
     'Segoe UI',
     sans-serif;
 }
+
+@keyframes character-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.character-working {
+  animation: character-bob 0.7s ease-in-out infinite;
+}
+
+.character-idle {
+  animation: none;
+}
