@@ -1,8 +1,8 @@
 ---
 name: pixel-office-design
-description: 카이로소프트 게임 톤(Game Dev Story / 만지작 만지작 류) 탑다운 픽셀 사무실 디자인 가이드 — sprite 비례, 색 팔레트, 가구 디테일, 애니메이션 패턴, 오픈소스 자료
-status: research
-applies_to: app/src/renderer/src/components/PixelOffice.tsx, Phase 4 PR2 이상 (5명 책상 배치 / 회의실 / 휴게실 / walk cycle)
+description: 카이로소프트 게임 톤(Game Dev Story / 만지작 만지작 류) 탑다운 픽셀 사무실 디자인 가이드 — sprite 비례, 색 팔레트, 가구 디테일, 애니메이션 패턴, 회의 모드, 오픈소스 자료
+status: stable
+applies_to: app/src/renderer/src/components/pixel-office/*, Phase 4 PR2+ (6직군 배치 / 회의실 zone / 회의 모드 transition / 휴게실 / 향후 walk cycle)
 last_updated: 2026-05-19
 ---
 
@@ -238,15 +238,32 @@ PR2에서 위 리서치를 코드에 반영할 구체 패턴.
 
 ### 패턴 B — 역할별 셔츠 팔레트 (카이로 식별성)
 
+payroll-os 회사 6직군에 맞춰 6색으로 확장. PR2.2에서 적용 완료(`8bab430`).
+
 ```ts
-const ROLE_PALETTE: Record<Role, { shirt: string; shirtDark: string; hair: string }> = {
-  PM:       { shirt: '#f59e0b', shirtDark: '#b45309', hair: '#451a03' }, // amber
-  Engineer: { shirt: '#3b82f6', shirtDark: '#1d4ed8', hair: '#1e293b' }, // blue
-  Designer: { shirt: '#ec4899', shirtDark: '#be185d', hair: '#7c2d12' }, // pink
-  QA:       { shirt: '#10b981', shirtDark: '#047857', hair: '#374151' }, // emerald
-  Ops:      { shirt: '#a855f7', shirtDark: '#7e22ce', hair: '#1e3a8a' }, // violet
+export type Role = 'PM' | 'Engineer' | 'Architect' | 'Planner' | 'QA' | 'Utility';
+
+export const ROLE_PALETTE: Record<Role, { shirt: string; shirtDark: string; hair: string }> = {
+  PM:        { shirt: '#f59e0b', shirtDark: '#b45309', hair: '#451a03' }, // amber
+  Engineer:  { shirt: '#3b82f6', shirtDark: '#1d4ed8', hair: '#1e293b' }, // blue
+  Architect: { shirt: '#a855f7', shirtDark: '#7e22ce', hair: '#1e3a8a' }, // violet
+  Planner:   { shirt: '#10b981', shirtDark: '#047857', hair: '#374151' }, // emerald
+  QA:        { shirt: '#f43f5e', shirtDark: '#be123c', hair: '#7c2d12' }, // rose (신규)
+  Utility:   { shirt: '#94a3b8', shirtDark: '#64748b', hair: '#1e293b' }, // slate
+};
+
+// 직원 id → Role 매핑
+export const EMPLOYEE_TO_ROLE: Record<string, Role> = {
+  pm: 'PM',
+  'dev-1': 'Engineer',
+  'dev-arch': 'Architect',
+  'planner-1': 'Planner',
+  'qa-1': 'QA',
+  'utility-1': 'Utility',
 };
 ```
+
+skill 원안의 Designer/Ops는 회사 컨셉상 사용 X → Architect/Planner/Utility로 재배치. QA 색은 emerald → rose (Planner가 emerald 쓰므로 충돌 회피 + 검증/경고 톤).
 
 ### 패턴 C — 책상 디테일 밀도 ("한 칸에 하나 더")
 
@@ -373,13 +390,44 @@ CSS로 표현하기 어려운 1~3px 디테일은 모두 SVG `<rect>`로. 빈 공
 - 본 skill은 **시각·정적 톤**만 다룬다. 게임 mechanic(시간 경과, 직원 성장, 자원 관리)은 별도 skill.
 - walk cycle 애니메이션은 sprite sheet 도입 시점에 다시 검토 (SVG keyframe으로 충분한지).
 
-## 1차 갈아엎기 회고 (`176c3bb`)
+## 구현 회고 (Phase 4 PR1~PR2.4)
 
-본인 감으로 만든 1차의 약점:
-- 캐릭터 비례 — 카이로식 SD 비례 미달 가능 (머리 vs 몸통 비율 검증 필요)
+### 1차 갈아엎기 (`176c3bb`) — 감 기반 베이스
+약점 5개:
+- 캐릭터 비례 — 카이로식 SD 비례 미달 (머리 6px / 몸통 4px ≈ 1.5 head, 카이로 2~2.5 미달)
 - 색 팔레트 — amber 단색 + slate. 카이로는 더 alive한 다채로움
-- 책상 detail — 모니터/키보드만. 컵/마우스/포스트잇 등 카이로 사무실 디테일 부재
-- 애니메이션 — translateY -2px bobbing만. 카이로 톤은 더 활기참
-- 사운드/음악 — 카이로 게임의 BGM/SFX 무시 (별도 skill 대상)
+- 책상 detail — 모니터/키보드만. 컵/마우스/포스트잇 부재
+- 애니메이션 — translateY -2px bobbing 단일. 카이로 톤은 1px 이하 + working 시 빠른 사이클
+- 사운드/음악 — 카이로 BGM/SFX 무시 (별도 skill 대상)
 
-리서치 결과로 PR2에서 위 5개 영역 정밀 손댐.
+### PR2.1 (`e01dec6`) — 패턴 A/C/E/F 적용
+- 캐릭터 비례 — 머리 6→7px, 어깨 12→10px (SD ~2 head)
+- 책상 디테일 — 커피잔/포스트잇 2개/마우스 SVG rect 추가, 5종 완성
+- 애니메이션 — kairo-idle 1800ms/-0.5px, kairo-working 200ms/-1px, kairo-thought, kairo-screen
+- `components/pixel-office/` 디렉토리 신설 (Character/Desk/Floor/Walls/palette)
+
+### PR2.2 (`8bab430`) — 패턴 B 적용 + 6직군
+- 6 Role 확장 (Architect/Planner/Utility/QA 색 회사 직군 매핑)
+- SEATS 상수 6개 좌석 — 위 row(Engineer/PM/Architect) + 아래 row(Planner/Utility/QA)
+- workingMap: roster.status='working' 자동 매핑
+- activeMap: 비활성 직원 opacity 0.35 흐릿하게 (사이드바 토글 연동)
+
+### PR2.3 (`dd3a0e2`) — 패턴 D + 가구 디테일
+- Zones.tsx (회의실 yellow + 휴게실 green overlay)
+- MeetingTable / Whiteboard / Sofa / WaterCooler SVG 컴포넌트
+- 좌석 좌표 미세 조정 (x=22/50/78 → 18/40/62, 우측 30% zone 영역 확보)
+
+### PR2.4 (`6ef4561`) — 회의 모드 visual
+- App.tsx에서 메시지 "회의:" prefix 감지 → meetingMode state
+- Desk 단일 → DeskSprite + WorkerAtSeat 분리
+- 캐릭터만 700ms transition으로 회의 테이블 둘레로 이동, 책상은 빈 의자로 자리에 남음
+- header에 "● 회의 중" emerald 배지 + 회의실 zone border 강조
+
+### 사장 검증 (2026-05-19)
+PR2.2 OK ("좋다 좋아"), PR2.3 OK ("쭉 진행"), PR2.4 OK ("쭉 진행"). status: research → **stable**.
+
+### 다음 라운드 후보 (sprite sheet 도입 트리거)
+- 회의 중 직원 말풍선 (정수기 옆 옹기종기, 회의 발언 turn 등)
+- 직원이 책상 ↔ 회의실/휴게실 walk cycle 애니메이션 — sprite sheet 도입 검토 시점
+- 사장 캐릭터 (시점 인물 또는 별도 office floor walk)
+- 시간 흐름(낮/밤) overlay + 퇴근 후 빈 사무실
