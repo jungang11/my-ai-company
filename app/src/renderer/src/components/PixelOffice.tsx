@@ -142,6 +142,17 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
                 </div>
               );
             })}
+
+            {/* 사장 캐릭터 — 입구 옆 default, 회의 모드 시 회의실 입구 옆 합류 */}
+            <WorkerAtSeat
+              x={meetingMode ? 68 : 88}
+              y={meetingMode ? 30 : 50}
+              role="Boss"
+              name="사장"
+              working={false}
+              meetingMode={meetingMode}
+              isPM={false}
+            />
           </div>
         </section>
         <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800 px-5 py-2 text-[10px] text-slate-500">

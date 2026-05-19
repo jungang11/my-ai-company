@@ -1,7 +1,7 @@
 // 카이로 톤 색 팔레트. 출처: docs/skills/pixel-office-design.md
 // 회사 6직군 매핑 — PR2.2에서 5명 추가하면서 skill 표준 5색을 회사 직군에 재배치 + 1색 신규(QA rose).
 
-export type Role = 'PM' | 'Engineer' | 'Architect' | 'Planner' | 'QA' | 'Utility';
+export type Role = 'PM' | 'Engineer' | 'Architect' | 'Planner' | 'QA' | 'Utility' | 'Boss';
 
 export const ROLE_PALETTE: Record<Role, { shirt: string; shirtDark: string; hair: string }> = {
   PM: { shirt: '#f59e0b', shirtDark: '#b45309', hair: '#451a03' }, // amber
@@ -10,6 +10,7 @@ export const ROLE_PALETTE: Record<Role, { shirt: string; shirtDark: string; hair
   Planner: { shirt: '#10b981', shirtDark: '#047857', hair: '#374151' }, // emerald
   QA: { shirt: '#f43f5e', shirtDark: '#be123c', hair: '#7c2d12' }, // rose
   Utility: { shirt: '#94a3b8', shirtDark: '#64748b', hair: '#1e293b' }, // slate
+  Boss: { shirt: '#f8fafc', shirtDark: '#cbd5e1', hair: '#475569' }, // white suit, gray hair (사장 차별화)
 };
 
 // 직원 id → Role 매핑. 좌석 배치는 PixelOffice.tsx의 SEATS 상수.
