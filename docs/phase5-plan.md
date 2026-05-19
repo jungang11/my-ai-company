@@ -1,8 +1,8 @@
-# Phase 5 — 분기 게임 사이클 (Plan)
+# Phase 5 — 분기 게임 사이클 (Plan + 구현 회고)
 
 > 사장이 회사를 게임처럼 운영. 카이로 (Game Dev Story / Manga Works) 분기 사이클 패턴을 payroll-os에 도입.
 > 작성 시점: 2026-05-19 — Phase 4 완성 + 퍼포먼스 라운드 + Phase 5 PR1~2 polish 후.
-> 상태: **draft, 사장 검토 대기**.
+> 상태: **stable** — PR1~14 + 추가 polish 모두 commit, 사장 시연 대기 (구현 회고 섹션 아래).
 
 ---
 
@@ -146,3 +146,43 @@ workspace/
 사장 검토 후:
 - 안건 1~4 결정 통보 (또는 본인 추천 OK)
 - PR1부터 진행 (`core/quarters` + `workspace/quarters/current.json` 인프라)
+
+---
+
+## 구현 회고 (2026-05-19, PR1~14 완성 후)
+
+사장 OK "쭉 진행" 반복으로 plan PR1~8 + 추가 polish PR9~14 자율 진행.
+
+### Plan 그대로 진행한 PR
+- PR1 (`76e3948`) core/quarters 인프라
+- PR2 (`ce531a7`) StatusBar 분기 표시 + QuarterPanel 모달
+- PR3 (`aa10c67`) PM 분기 인지 + 자동 시스템 메시지
+- PR4 (`02bdda4`) Whiteboard 분기 title + 진척 bar
+- PR5 (`5f363e0`) sessionIds 자동 append + 직원 이름표 건수
+- PR6 (`5eccb29`) `회고:` prefix + PM 회고 모드
+- PR7 (`26de49a`) UsagePanel scope 토글
+- PR8 (`67e0677`) QuarterPanel archive history
+
+### Plan 외 추가 polish
+- PR9 (`58e79bf`) 회고 결과 영속화 — archive `retrospective` 자동 채움. captureLatestRetrospective() helper.
+- PR10 (`ee39c42`) 회의 모드 풍선 정밀화 — 실제 일감 풍선 우선, 회의 풍선은 idle 참석자만.
+- PR11 (`47d4bce`) 분기 변경 시 화이트보드 3초 amber pulse cue (CSS transition).
+- PR12 (`5762d97`) 회고 모드 시각 cue 분리 — header 배지 emerald/rose 분기.
+- PR13 (`ab9c0c3`) Zones 색 분리 — 회의실 border emerald(회의) vs rose(회고).
+- PR14 (`ab9c0c3`) 사장 캐릭터 회의 자리 정밀화 — 회의실 입구 옆 → PM 대면 자리.
+- 퍼포먼스 PR5 (`ab9c0c3`) planner-1/qa-1 .md에 회고 모드 가이드 (결과 형식 + 분기 정보 인용 강제).
+
+### 학습한 것
+- 분기 정보를 PM에 inject할 때 매 메시지 X, 변경 시에만 enqueueSystemMessage로 통지 → cache 보존 + 정보 누락 X.
+- 회고 데이터는 PM 응답에 의존 → 사장 메시지 직전 PM 응답을 추출하는 captureLatestRetrospective 패턴이 단순/안전.
+- 회의/회고 시각 cue를 분리하지 않으면 사장이 두 모드 구분 어려움 → 배지/zone border 색으로 분리 즉시 인지.
+- 회의실 자리는 캐릭터 7명 들어가면 빡빡 → 사장은 zone 밖(입구쪽)에 두는 게 자연.
+
+### 의도적으로 안 한 것 (다음 라운드 후보)
+- 분기 자동 종료 (시간 기반) — 사장 명시 선언 그대로.
+- 직원 KPI/평가 시스템 — 분기 회고로 충분.
+- 분기별 cost 비용 회계 — UsagePanel 토글로 누적은 보이지만 분기별 cost 분리 X (Task tool sub-agent cost 한계).
+- 시연 자동화 도구 (benchmark 클릭 한 번 spawn) — 큰 PR, 사장 결정.
+
+### 다음 단계
+사장 직접 시연 — `docs/benchmark.md` S9~S11 + 분기 사이클 한 cycle (시작 → 일감 → 회고 → 새 분기 시작 → archive 확인).

@@ -94,6 +94,19 @@ payroll-os/
 - [ ] Figma MCP 디자인 직원 — **보류**.
 - [x] sub-agent 영속화 — `workspace/sessions/<taskId>/{output.log, done}` 저장 + 앱 시작 시 historical 카드 복원.
 
+### Phase 5 — 분기 게임 사이클 (✅ 2026-05-19 PR1~14 완성, 사장 시연 대기)
+- [x] 분기 시작/종료 — 사장 명시 선언 (시간 자동 X, 카이로식 페이스)
+- [x] `core/quarters/` 파일 기반 데이터 model (`workspace/quarters/current.json` + archive)
+- [x] StatusBar 분기 표시 + QuarterPanel 모달 (현재 + 새 분기 시작 + archive history)
+- [x] PM 시스템 프롬프트 분기 인지 + 분기 변경 시 자동 시스템 메시지
+- [x] sessionIds 자동 append (`onSubAgentDone` 후) → 직원 이름표 분기 spawn 건수 표시
+- [x] 화이트보드에 분기 title + 진척 bar + 분기 변경 시 3초 amber pulse cue
+- [x] `회고:` prefix → 분기 정보 augment + PM이 planner-1+qa-1 동시 spawn + 통합 보고
+- [x] 회고 결과 archive에 retrospective 자동 영속화
+- [x] UsagePanel scope 토글 (전체/현 분기)
+- [x] 회의 모드 vs 회고 모드 시각 cue 분리 (emerald / rose 배지 + Zones border)
+- [x] 사장 캐릭터 회의 시 PM 대면 자리
+
 ### Phase 4 — 픽셀 사무실 (✅ 2026-05-19 PR2.9까지 통과, 카이로소프트 톤)
 - [x] 직원 캐릭터 6명 + 사장 1명 SVG sprite — 셔츠 7색(PM/Engineer/Architect/Planner/QA/Utility/Boss) 식별, SD ~2 head 비례
 - [x] 사무실 맵 — `pixel-office/{Character, Desk, Floor, Walls, MeetingTable, Whiteboard, Sofa, WaterCooler, Zones, TimeOverlay}.tsx`, 회의실+휴게실 zone overlay, 가구 디테일 (모니터/키보드/마우스/커피잔/포스트잇)

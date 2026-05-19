@@ -11,8 +11,10 @@
 Phase 1 + Phase 2 본질 시연 통과 (2026-05-18). Phase 3 부분 진행
 (Codex/Gemini/Figma 보류, 영속화/UsagePanel 완료). Phase 4 픽셀 사무실
 카이로 톤 PR2.9까지 통과 (2026-05-19) — 6직군+사장 캐릭터, 회의 모드
-(walk cycle + 말풍선), 시간 흐름(자동+토글). 자세한 현 상태는
-`docs/PROGRESS.md` 한 페이지에 정리되어 있음 — **새 세션은 거기서부터 시작.**
+(walk cycle + 말풍선), 시간 흐름. Phase 5 분기 게임 사이클 PR1~14 완성
+(2026-05-19) — 분기 시작/일감 누적/회고:/archive 영속/회고 모드 시각 분리.
+audio-design skill research-complete (사장 audio 도입 패스). 자세한 현
+상태는 `docs/PROGRESS.md` 한 페이지에 정리됨 — **새 세션은 거기서부터 시작.**
 
 ## 작업 원칙
 
