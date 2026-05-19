@@ -15,20 +15,55 @@ body,
     sans-serif;
 }
 
-@keyframes character-bob {
+/* 카이로 톤 애니메이션 — 1px 이하 amplitude. 출처: docs/skills/pixel-office-design.md 패턴 E */
+@keyframes kairo-idle {
   0%,
   100% {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-2px);
+    transform: translateY(-0.5px);
+  }
+}
+@keyframes kairo-working {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+@keyframes kairo-thought {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes kairo-screen {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
   }
 }
 
-.character-working {
-  animation: character-bob 0.7s ease-in-out infinite;
-}
-
 .character-idle {
-  animation: none;
+  animation: kairo-idle 1800ms ease-in-out infinite;
+}
+.character-working {
+  animation: kairo-working 200ms linear infinite;
+}
+.thought-bubble {
+  animation: kairo-thought 1500ms ease-in-out infinite;
+}
+.screen-blink {
+  animation: kairo-screen 700ms ease-in-out infinite;
 }
