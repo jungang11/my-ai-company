@@ -4,12 +4,14 @@ type Props = {
   role: Role;
   working: boolean;
   walking?: boolean;
+  bubbleText?: string;
 };
 
 // 카이로 톤 SD 비례 (~2 head): 머리 7px, 어깨 10px, 정면 ¾ 시점.
 // 출처: docs/skills/pixel-office-design.md 패턴 A.
 // walking > working > idle 애니메이션 우선순위 (walk cycle: 이동 중 bobbing+rotate).
-export function Character({ role, working, walking }: Props) {
+// bubbleText 있으면 ⌨️ 대신 prompt 첫 줄 표시 (sub-agent 일감 실시간).
+export function Character({ role, working, walking, bubbleText }: Props) {
   const c = ROLE_PALETTE[role];
   const animClass = walking
     ? 'character-walking'
@@ -19,8 +21,8 @@ export function Character({ role, working, walking }: Props) {
   return (
     <div className="relative flex flex-col items-center">
       {working && !walking && (
-        <div className="thought-bubble absolute -top-5 left-9 z-10 flex items-center justify-center rounded-md bg-white px-1.5 py-0.5 text-[8px] text-slate-700 shadow-sm ring-1 ring-slate-400">
-          ⌨️
+        <div className="thought-bubble absolute -top-5 left-9 z-10 flex items-center justify-center whitespace-nowrap rounded-md bg-white px-1.5 py-0.5 text-[8px] text-slate-700 shadow-sm ring-1 ring-slate-400">
+          {bubbleText ? bubbleText : '⌨️'}
         </div>
       )}
       <svg

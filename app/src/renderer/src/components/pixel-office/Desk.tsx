@@ -76,11 +76,21 @@ type WorkerProps = {
   working: boolean;
   meetingMode: boolean;
   isPM: boolean;
+  bubbleText?: string;
 };
 
 // 캐릭터 + 이름표 + 풍선. 회의 모드 시 회의실 좌표로 transition.
 // 회의 모드일 땐 ⌨️ working 풍선 대신 회의 풍선(PM 💬 발언 / 나머지 ... 청취) 표시.
-export function WorkerAtSeat({ x, y, role, name, working, meetingMode, isPM }: WorkerProps) {
+export function WorkerAtSeat({
+  x,
+  y,
+  role,
+  name,
+  working,
+  meetingMode,
+  isPM,
+  bubbleText,
+}: WorkerProps) {
   const effectiveWorking = working && !meetingMode;
   // meetingMode 전환 시 700ms walk cycle (transition duration과 동일).
   const [walking, setWalking] = useState(false);
@@ -104,7 +114,12 @@ export function WorkerAtSeat({ x, y, role, name, working, meetingMode, isPM }: W
             {isPM ? '💬' : '···'}
           </div>
         )}
-        <Character role={role} working={effectiveWorking} walking={walking} />
+        <Character
+          role={role}
+          working={effectiveWorking}
+          walking={walking}
+          bubbleText={meetingMode ? undefined : bubbleText}
+        />
         <div className="mt-1 rounded-sm bg-slate-900/90 px-1.5 py-0.5 text-[9px] font-medium text-slate-100 shadow-sm ring-1 ring-slate-700">
           {name}
         </div>

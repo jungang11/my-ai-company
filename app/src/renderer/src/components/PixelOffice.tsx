@@ -65,6 +65,17 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
     return map;
   }, [pmPending, roster]);
 
+  // 직원별 현재 일감 풍선 텍스트 — working row의 prompt 첫 줄 truncate.
+  const bubbleMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const r of roster) {
+      if (r.status !== 'working') continue;
+      const first = r.prompt.split('\n')[0].trim();
+      map[r.employeeId] = first.length <= 16 ? first : first.slice(0, 15) + '…';
+    }
+    return map;
+  }, [roster]);
+
   const activeMap = useMemo(() => {
     const map: Record<string, boolean> = {};
     for (const p of profiles) {
@@ -178,6 +189,7 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
                     working={!!workingMap[seat.employeeId]}
                     meetingMode={meetingMode}
                     isPM={seat.employeeId === 'pm'}
+                    bubbleText={bubbleMap[seat.employeeId]}
                   />
                 </div>
               );
