@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { EmployeeProfile } from '../../../shared/ipc';
+import type { EmployeeProfile, QuarterMeta } from '../../../shared/ipc';
 import type { EmployeeRow } from '../state/employee-store';
 import { MessageInput } from './MessageInput';
 import { DeskSprite, WorkerAtSeat } from './pixel-office/Desk';
@@ -24,6 +24,7 @@ type Props = {
   meetingMode: boolean;
   roster: EmployeeRow[];
   profiles: EmployeeProfile[];
+  quarter: QuarterMeta | null;
   onClose: () => void;
   onSend: (text: string) => void;
 };
@@ -53,6 +54,7 @@ export function PixelOffice({
   meetingMode,
   roster,
   profiles,
+  quarter,
   onClose,
   onSend,
 }: Props) {
@@ -185,7 +187,7 @@ export function PixelOffice({
             <Floor />
             <Walls />
             <Zones meetingMode={meetingMode} />
-            <Whiteboard x={82} y={14} />
+            <Whiteboard x={82} y={14} quarter={quarter} />
             <MeetingTable x={82} y={30} />
             <WaterCooler x={75} y={66} />
             <Sofa x={84} y={76} />

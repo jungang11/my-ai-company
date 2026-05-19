@@ -206,6 +206,7 @@ export function App() {
           meetingMode={meetingMode}
           roster={roster}
           profiles={profiles}
+          quarter={currentQuarter}
           onClose={() => setOfficeOpen(false)}
           onSend={send}
         />
