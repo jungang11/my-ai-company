@@ -1,10 +1,17 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { EmployeeProfile } from '../../../shared/ipc';
 import type { EmployeeRow } from '../state/employee-store';
 import { DeskSprite, WorkerAtSeat } from './pixel-office/Desk';
 import { Floor } from './pixel-office/Floor';
 import { MeetingTable } from './pixel-office/MeetingTable';
 import { Sofa } from './pixel-office/Sofa';
+import {
+  fromHour,
+  TIME_CYCLE,
+  TimeOverlay,
+  timeOfDayLabel,
+  type TimeOfDay,
+} from './pixel-office/TimeOverlay';
 import { Walls } from './pixel-office/Walls';
 import { WaterCooler } from './pixel-office/WaterCooler';
 import { Whiteboard } from './pixel-office/Whiteboard';
@@ -68,6 +75,20 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
 
   const workingCount = Object.values(workingMap).filter(Boolean).length;
 
+  // 시간대 — 시스템 시간 자동 (1분마다 update) + 사장 manual override 가능.
+  const [autoTime, setAutoTime] = useState<TimeOfDay>(() => fromHour(new Date().getHours()));
+  const [override, setOverride] = useState<TimeOfDay | null>(null);
+  useEffect(() => {
+    const tick = setInterval(() => setAutoTime(fromHour(new Date().getHours())), 60_000);
+    return () => clearInterval(tick);
+  }, []);
+  const timeOfDay = override ?? autoTime;
+  function cycleOverride() {
+    const cur = override ?? autoTime;
+    const next = TIME_CYCLE[(TIME_CYCLE.indexOf(cur) + 1) % TIME_CYCLE.length];
+    setOverride(next);
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6"
@@ -91,13 +112,32 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
               </span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-          >
-            닫기 (Esc)
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={cycleOverride}
+              title={override ? 'manual override' : 'auto (시스템 시간)'}
+              className="rounded-md border border-slate-700 px-2 py-1 text-[10px] text-slate-300 hover:border-amber-500/50 hover:text-amber-200"
+            >
+              {timeOfDayLabel(timeOfDay)} {override ? '·수동' : '·자동'}
+            </button>
+            {override && (
+              <button
+                type="button"
+                onClick={() => setOverride(null)}
+                className="text-[10px] text-slate-500 hover:text-slate-300"
+              >
+                ↺
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+            >
+              닫기 (Esc)
+            </button>
+          </div>
         </header>
         <section className="flex-1 overflow-hidden p-4">
           <div className="relative h-full w-full overflow-hidden rounded-lg ring-2 ring-amber-950 shadow-2xl">
@@ -153,6 +193,9 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
               meetingMode={meetingMode}
               isPM={false}
             />
+
+            {/* 시간대 overlay — 최상위 (캐릭터/가구 모두 덮어 분위기 통일) */}
+            <TimeOverlay timeOfDay={timeOfDay} />
           </div>
         </section>
         <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800 px-5 py-2 text-[10px] text-slate-500">
