@@ -2,6 +2,7 @@ import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { Chat } from './components/Chat';
 import { EmployeeRoster } from './components/EmployeeRoster';
 import { PixelOffice } from './components/PixelOffice';
+import { QuarterPanel } from './components/QuarterPanel';
 import { StatusBar } from './components/StatusBar';
 import { SubSessionDetail } from './components/SubSessionDetail';
 import { UsagePanel } from './components/UsagePanel';
@@ -9,6 +10,7 @@ import { newMessage, type ChatMessage } from './state/chat-store';
 import type { EmployeeRow } from './state/employee-store';
 import type {
   EmployeeProfile,
+  QuarterMeta,
   RosterUpdatePayload,
   StatusInit,
   StatusSnapshot,
@@ -72,6 +74,8 @@ export function App() {
   const [meetingMode, setMeetingMode] = useState(false);
   const [usageOpen, setUsageOpen] = useState(false);
   const [officeOpen, setOfficeOpen] = useState(false);
+  const [quarterOpen, setQuarterOpen] = useState(false);
+  const [currentQuarter, setCurrentQuarter] = useState<QuarterMeta | null>(null);
 
   useEffect(() => {
     if (!window.api) {
@@ -88,6 +92,9 @@ export function App() {
     });
     window.api.fetchEmployees().then(setProfiles).catch((err) => {
       console.error('[payroll-os] fetchEmployees failed:', err);
+    });
+    window.api.fetchCurrentQuarter().then(setCurrentQuarter).catch((err) => {
+      console.error('[payroll-os] fetchCurrentQuarter failed:', err);
     });
     // 앱 시작 시 workspace/sessions의 done 마커 있는 과거 세션을 historical 카드로 복원.
     window.api
@@ -182,12 +189,13 @@ export function App() {
           onOpenSession={(row) => setSelectedSessionId(row.sessionId)}
           onOpenUsage={() => setUsageOpen(true)}
           onOpenOffice={() => setOfficeOpen(true)}
+          onOpenQuarter={() => setQuarterOpen(true)}
         />
         <div className="flex flex-1 flex-col ring-1 ring-slate-800">
           <Chat messages={messages} onSend={send} pending={pmPending} />
         </div>
       </div>
-      <StatusBar init={statusInit} status={status} />
+      <StatusBar init={statusInit} status={status} quarter={currentQuarter} />
       <SubSessionDetail row={selectedRow} onClose={() => setSelectedSessionId(null)} />
       {usageOpen && (
         <UsagePanel rows={roster} profiles={profiles} onClose={() => setUsageOpen(false)} />
@@ -200,6 +208,13 @@ export function App() {
           profiles={profiles}
           onClose={() => setOfficeOpen(false)}
           onSend={send}
+        />
+      )}
+      {quarterOpen && (
+        <QuarterPanel
+          current={currentQuarter}
+          onClose={() => setQuarterOpen(false)}
+          onStart={(next) => setCurrentQuarter(next)}
         />
       )}
     </main>

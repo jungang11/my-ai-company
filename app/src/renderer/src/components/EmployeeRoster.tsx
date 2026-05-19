@@ -11,6 +11,7 @@ type Props = {
   onOpenSession?: (row: EmployeeRow) => void;
   onOpenUsage?: () => void;
   onOpenOffice?: () => void;
+  onOpenQuarter?: () => void;
 };
 
 export function EmployeeRoster({
@@ -20,6 +21,7 @@ export function EmployeeRoster({
   onOpenSession,
   onOpenUsage,
   onOpenOffice,
+  onOpenQuarter,
 }: Props) {
   const working = rows.filter((r) => r.status === 'working');
   const finished = rows.filter((r) => r.status !== 'working');
@@ -89,6 +91,15 @@ export function EmployeeRoster({
       </section>
 
       <div className="mt-auto flex flex-col gap-2">
+        {onOpenQuarter && (
+          <button
+            type="button"
+            onClick={onOpenQuarter}
+            className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-300 hover:border-amber-500/60 hover:text-amber-200"
+          >
+            분기 관리 →
+          </button>
+        )}
         {onOpenOffice && (
           <button
             type="button"

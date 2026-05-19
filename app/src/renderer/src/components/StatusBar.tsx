@@ -1,8 +1,9 @@
-import type { StatusSnapshot, StatusInit, RateLimitInfo } from '../../../shared/ipc';
+import type { QuarterMeta, RateLimitInfo, StatusInit, StatusSnapshot } from '../../../shared/ipc';
 
 type Props = {
   init: StatusInit | null;
   status: StatusSnapshot | null;
+  quarter: QuarterMeta | null;
 };
 
 function formatTokens(n: number): string {
@@ -43,7 +44,13 @@ function rateLimitChip(info: RateLimitInfo) {
   );
 }
 
-export function StatusBar({ init, status }: Props) {
+function shortQuarterTitle(q: QuarterMeta | null): string {
+  if (!q) return '?';
+  const t = q.title.trim() || 'Untitled';
+  return t.length <= 18 ? t : t.slice(0, 17) + '…';
+}
+
+export function StatusBar({ init, status, quarter }: Props) {
   // ctx = 마지막 turn에서 PM이 실제 사용한 context window 점유분.
   // = fresh input + cache read (이전 turn 누적이 cache로 hit) + cache creation (새 cache).
   // 1M 한도 대비 몇 % 차지하고 있는지 사장이 한 turn 기준으로 보고 싶어함.
@@ -77,6 +84,11 @@ export function StatusBar({ init, status }: Props) {
       <span>
         <span className="text-slate-500">model</span>{' '}
         <span className="text-emerald-400">{status?.model || '?'}</span>
+      </span>
+      <span className="text-slate-600">·</span>
+      <span title={quarter?.description || quarter?.title || '분기 정보 없음'}>
+        <span className="text-slate-500">분기</span>{' '}
+        <span className="text-amber-300">{shortQuarterTitle(quarter)}</span>
       </span>
 
       <span className="ml-auto flex items-center gap-3">
