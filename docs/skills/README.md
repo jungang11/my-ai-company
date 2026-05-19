@@ -53,6 +53,7 @@ last_updated: YYYY-MM-DD
 | skill | 상태 | 적용 영역 | 마지막 갱신 |
 |---|---|---|---|
 | [pixel-office-design](pixel-office-design.md) | stable | `app/src/renderer/src/components/pixel-office/*`, Phase 4 PR2.1~2.4 적용 완료 | 2026-05-19 |
+| [audio-design](audio-design.md) | research | 카이로 톤 BGM/SFX, Electron audio API. Phase 6+ 도입 안건 | 2026-05-19 |
 
 ## 사용 흐름
 
