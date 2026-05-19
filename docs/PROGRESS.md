@@ -1,7 +1,7 @@
 # 진행 현황 (세션 인수인계)
 
 > 새 세션에서 이 파일을 처음 읽고 바로 작업 이어갈 수 있도록 한 페이지로 정리한 진행표.
-> 갱신 시점: 2026-05-19 — Phase 5 PR1~2 (sub-agent 풍선 + Lv) + 퍼포먼스 라운드 PR1~3 (PM 강화 + 직원 .md 강화 + benchmark).
+> 갱신 시점: 2026-05-19 — Phase 5 분기 게임 사이클 PR1~8 완성 (사장 시연 대기).
 
 ---
 
@@ -11,9 +11,19 @@
 
 ---
 
-## 누적 commit (push 가능 단위, origin 보다 53 ahead)
+## 누적 commit (push 가능 단위, origin 보다 64 ahead)
 
 ```
+67e0677 app: Phase 5 PR8 — QuarterPanel 분기 archive history 섹션
+26de49a app: Phase 5 PR7 — UsagePanel 분기 scope 토글 (전체/현 분기)
+5eccb29 core+app: Phase 5 PR6 — 회고: prefix 자동 처리 (분기 정보 augment + meetingMode)
+5f363e0 core+app: Phase 5 PR5 — 직원 분기 누적 + sessionIds 자동 append
+02bdda4 app: Phase 5 PR4 — 사무실 화이트보드에 분기 목표 + 진척 bar
+aa10c67 core+app: Phase 5 PR3 — PM 분기 인지 + 분기 시작 시 자동 시스템 메시지
+ce531a7 app: Phase 5 PR2 — 분기 시작 UI (StatusBar 표시 + QuarterPanel 모달)
+76e3948 core+app: Phase 5 PR1 — quarters 인프라 (storage + IPC + preload, UI는 PR2)
+b61708a docs: Phase 5 분기 게임 사이클 plan (draft, 사장 검토 대기)
+8614399 docs: PROGRESS.md sync — Phase 5 PR1~2 + 퍼포먼스 라운드 PR1~3 반영
 fc65c8d docs: benchmark.md — 직원 퍼포먼스 검증 시연 시나리오 (퍼포먼스 PR3)
 7465e12 core: 직원 5명 .claude/agents 강화 — 자체 검증 + 결과 형식 통일 (퍼포먼스 PR2)
 8c043eb core: PM 시스템 프롬프트 강화 — 위임 결정 표 + case 예시 + sanity check (퍼포먼스 PR1)
@@ -192,12 +202,25 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 
 **다음 단계**: 사장이 benchmark.md 시나리오 직접 시연 → 정확도 점수 → 회귀 보정 또는 PR4 (UsagePanel 평가 메트릭 컬럼).
 
-### I. 다음 라운드 후보 (사장 결정 안건)
-- **사장 benchmark 시연** — 8개 시나리오 결과 점수
-- **PR4 UsagePanel 메트릭 추적** — 시연 결과를 평가 컬럼으로 누적 (Phase 5 후순위)
+### I. Phase 5 분기 게임 사이클 (2026-05-19) — `docs/phase5-plan.md` 기반 자율 PR1~8 완성
+
+사장 OK "쭉 진행"으로 8개 PR 일괄. typecheck/build 모두 통과. 사장 직접 시연 미진행:
+
+- ✅ **PR1** (`76e3948`) — `core/quarters/` 인프라 (storage + IPC + preload)
+- ✅ **PR2** (`ce531a7`) — StatusBar 분기 표시 + QuarterPanel 모달 (현재 분기 + 새 분기 시작 폼)
+- ✅ **PR3** (`aa10c67`) — PM 시스템 프롬프트 분기 인지 섹션 + 분기 시작 시 enqueueSystemMessage 자동 통지
+- ✅ **PR4** (`02bdda4`) — Whiteboard에 분기 title + 진척 bar (sprite 확대 42×12)
+- ✅ **PR5** (`5f363e0`) — onSubAgentDone 시 sessionIds 자동 append + 직원 이름표에 분기 spawn count emerald 표시
+- ✅ **PR6** (`5eccb29`) — `회고:` prefix 감지 → 분기 정보 inline augment + meetingMode 활성, PM 시스템 프롬프트에 회고 모드 (planner-1 + qa-1 동시 spawn)
+- ✅ **PR7** (`26de49a`) — UsagePanel scope 토글 (전체 / 현 분기)
+- ✅ **PR8** (`67e0677`) — QuarterPanel 안에 archive history 섹션 (3개 기본 + 전부 보기)
+
+### J. 다음 라운드 후보 (사장 결정 안건)
+- **사장 분기 사이클 시연** — `docs/benchmark.md` + 분기 시작 → 일감 → 회고 → 다음 분기 흐름 검증
+- **사장 시각 검증** — 화이트보드 분기 표시 / 직원 이름표 분기 건수 / UsagePanel 토글
+- **퍼포먼스 benchmark 시연** — 별개 안건. 8개 시나리오 시연 후 시스템 프롬프트 회귀 점검
 - **외부 CLI 재개** — Codex/Gemini/Figma 구독 시점에 phase3-plan PR1부터
-- **push 일괄 처리** — personal swap 후 53개 commit push
-- **Phase 5 후속 비전** — 분기 게임 사이클(target/회고), BGM/SFX(별도 skill), sprite sheet 정밀화 등
+- **push 일괄 처리** — personal swap 후 64개 commit push
 
 ---
 
@@ -218,12 +241,12 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 
 1. `README.md` + `CLAUDE.md` + 이 `docs/PROGRESS.md` 읽기. 필요 시 `docs/models.md`, `docs/phase{1,2,3}-plan.md`, `docs/skills/README.md`(시각 영역).
 2. 메모리 자동 로드 (`~/.claude/projects/.../memory/MEMORY.md`).
-3. 마지막 commit `fc65c8d` 위에서 시작. 워킹트리 clean 확인.
+3. 마지막 commit `67e0677` 위에서 시작. 워킹트리 clean 확인.
 4. 사장 다음 지시 대기:
    - **시각 영역 작업** → 해당 `docs/skills/<name>.md` 먼저 읽고 패턴 따름. 없으면 작은 PR 후 사장 검토 → 깊이 필요하면 skill 신규.
    - "Phase 4 더 가자" → 회의 말풍선 / walk cycle / 사장 캐릭터 / 시간 흐름 중 사장 통보.
    - "Codex/Gemini 들어왔어" → `docs/phase3-plan.md` PR1(다중 CLI 백엔드 추상화)부터.
    - "시연 검증 결과" → C 섹션의 시연 시나리오 안내.
-   - "push 가능" → personal GitHub Desktop swap 확인 후 일괄 push (53개).
+   - "push 가능" → personal GitHub Desktop swap 확인 후 일괄 push (64개).
    - "benchmark 시연 결과" → `docs/benchmark.md` 점수 정리 + 회귀 시 시스템 프롬프트 보정.
    - 다른 안건 → 작은 단위로 분해 후 진행.
