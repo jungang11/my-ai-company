@@ -67,3 +67,30 @@ body,
 .screen-blink {
   animation: kairo-screen 700ms ease-in-out infinite;
 }
+
+@keyframes meeting-speak {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateY(-1px) scale(1.06);
+  }
+}
+@keyframes meeting-listen {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+.meeting-bubble-speak {
+  animation: meeting-speak 1.2s ease-in-out infinite;
+}
+.meeting-bubble-listen {
+  animation: meeting-listen 2.5s ease-in-out infinite;
+}

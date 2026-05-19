@@ -136,6 +136,8 @@ export function PixelOffice({ pmPending, meetingMode, roster, profiles, onClose 
                     role={seat.role}
                     name={seat.name}
                     working={!!workingMap[seat.employeeId]}
+                    meetingMode={meetingMode}
+                    isPM={seat.employeeId === 'pm'}
                   />
                 </div>
               );

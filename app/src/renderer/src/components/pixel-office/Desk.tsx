@@ -73,17 +73,30 @@ type WorkerProps = {
   role: Role;
   name: string;
   working: boolean;
+  meetingMode: boolean;
+  isPM: boolean;
 };
 
 // 캐릭터 + 이름표 + 풍선. 회의 모드 시 회의실 좌표로 transition.
-export function WorkerAtSeat({ x, y, role, name, working }: WorkerProps) {
+// 회의 모드일 땐 ⌨️ working 풍선 대신 회의 풍선(PM 💬 발언 / 나머지 ... 청취) 표시.
+export function WorkerAtSeat({ x, y, role, name, working, meetingMode, isPM }: WorkerProps) {
+  const effectiveWorking = working && !meetingMode;
   return (
     <div
       className="absolute transition-all duration-700 ease-in-out"
       style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
     >
-      <div className="flex flex-col items-center">
-        <Character role={role} working={working} />
+      <div className="relative flex flex-col items-center">
+        {meetingMode && (
+          <div
+            className={`absolute -top-7 z-10 flex items-center justify-center rounded-md bg-white px-1.5 py-0.5 text-[9px] text-slate-700 shadow-sm ring-1 ring-slate-400 ${
+              isPM ? 'meeting-bubble-speak' : 'meeting-bubble-listen'
+            }`}
+          >
+            {isPM ? '💬' : '···'}
+          </div>
+        )}
+        <Character role={role} working={effectiveWorking} />
         <div className="mt-1 rounded-sm bg-slate-900/90 px-1.5 py-0.5 text-[9px] font-medium text-slate-100 shadow-sm ring-1 ring-slate-700">
           {name}
         </div>
