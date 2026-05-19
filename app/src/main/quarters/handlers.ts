@@ -2,6 +2,7 @@ import { ipcMain } from 'electron';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  appendSessionToCurrent,
   archiveQuarter,
   listArchivedQuarters,
   loadCurrentQuarter,
@@ -27,6 +28,15 @@ function ensureCurrent(): QuarterMeta {
     saveCurrentQuarter(projectRoot, cur);
   }
   return cur;
+}
+
+// main이 sub-agent done 시 호출 — 현 분기 sessionIds 누적.
+export function recordSessionInQuarter(sessionId: string): void {
+  try {
+    appendSessionToCurrent(projectRoot, sessionId);
+  } catch (err) {
+    console.warn('[quarters] session 누적 실패:', err);
+  }
 }
 
 export function wireQuartersHandlers(pmCallbacks: PMCallbacks): void {

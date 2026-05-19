@@ -12,7 +12,7 @@ import {
 } from '../shared/ipc.js';
 import { enqueueSystemMessage, killPM, sendToPM, type PMCallbacks } from './employee/pm-runner.js';
 import { getEmployee, listEmployees, setActive, toPublic } from './employee/manager.js';
-import { wireQuartersHandlers } from './quarters/handlers.js';
+import { recordSessionInQuarter, wireQuartersHandlers } from './quarters/handlers.js';
 import { loadHistoricalSessions, persistSubSession } from './sessions/historical.js';
 import { killAllSubs } from './spawn/runner.js';
 import { startSpawnWatcher, stopSpawnWatcher } from './spawn/watcher.js';
@@ -101,6 +101,9 @@ const pmCallbacks: PMCallbacks = {
         console.warn('[sessions] persist 실패:', err);
       }
     }
+
+    // 현 분기 sessionIds 누적 (Phase 5 PR5).
+    recordSessionInQuarter(info.taskId);
 
     if (!mainWindow) return;
     // 1) output 전체를 한 chunk로 먼저 보냄 (카드 미리보기 + 모달에 표시)

@@ -87,6 +87,19 @@ export function PixelOffice({
     return map;
   }, [roster]);
 
+  // 현 분기 동안 spawn된 sessionIds set — 직원별 분기 누적 count 계산용.
+  const quarterSpawnsByEmployee = useMemo(() => {
+    if (!quarter) return {};
+    const set = new Set(quarter.sessionIds);
+    const counts: Record<string, number> = {};
+    for (const r of roster) {
+      if (set.has(r.sessionId)) {
+        counts[r.employeeId] = (counts[r.employeeId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, [quarter, roster]);
+
   // 직원별 누적 spawn+tokens → 5단계 레벨. PM은 사장 직속이라 Lv5 고정.
   const levelMap = useMemo(() => {
     const counts: Record<string, { spawns: number; tokens: number }> = {};
@@ -223,6 +236,7 @@ export function PixelOffice({
                     isPM={seat.employeeId === 'pm'}
                     bubbleText={bubbleMap[seat.employeeId]}
                     level={levelMap[seat.employeeId] ?? 1}
+                    quarterSpawns={quarterSpawnsByEmployee[seat.employeeId] ?? 0}
                   />
                 </div>
               );

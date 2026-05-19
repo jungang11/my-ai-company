@@ -37,6 +37,15 @@ export function archiveQuarter(rootDir: string, q: QuarterMeta): void {
   writeFileSync(file, JSON.stringify(q, null, 2), 'utf8');
 }
 
+// sub-agent done 시 main에서 호출 — 현 분기에 sessionId 누적 (중복 skip).
+export function appendSessionToCurrent(rootDir: string, sessionId: string): void {
+  const cur = loadCurrentQuarter(rootDir);
+  if (!cur) return;
+  if (cur.sessionIds.includes(sessionId)) return;
+  cur.sessionIds.push(sessionId);
+  saveCurrentQuarter(rootDir, cur);
+}
+
 export function listArchivedQuarters(rootDir: string): QuarterMeta[] {
   const dir = ensureDir(rootDir);
   const result: QuarterMeta[] = [];

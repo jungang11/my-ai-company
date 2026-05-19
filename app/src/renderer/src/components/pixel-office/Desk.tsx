@@ -78,6 +78,7 @@ type WorkerProps = {
   isPM: boolean;
   bubbleText?: string;
   level?: number; // 1~5, Boss는 undefined로 표시 X
+  quarterSpawns?: number; // 현 분기 동안 spawn 횟수 (0이면 표시 X)
 };
 
 // 캐릭터 + 이름표 + 풍선. 회의 모드 시 회의실 좌표로 transition.
@@ -92,6 +93,7 @@ export function WorkerAtSeat({
   isPM,
   bubbleText,
   level,
+  quarterSpawns,
 }: WorkerProps) {
   const effectiveWorking = working && !meetingMode;
   // meetingMode 전환 시 700ms walk cycle (transition duration과 동일).
@@ -126,6 +128,9 @@ export function WorkerAtSeat({
           <span>{name}</span>
           {level !== undefined && (
             <span className="text-[8px] text-amber-300">Lv{level}</span>
+          )}
+          {quarterSpawns !== undefined && quarterSpawns > 0 && (
+            <span className="text-[8px] text-emerald-400">·{quarterSpawns}건</span>
           )}
         </div>
       </div>
