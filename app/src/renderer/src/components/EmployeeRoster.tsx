@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { EmployeeProfile } from '../../../shared/ipc';
 import type { EmployeeRow } from '../state/employee-store';
+import { CatalogSwitcher } from './CatalogSwitcher';
 import { EmployeeCard } from './EmployeeCard';
 import { EmployeeProfileRow, type EmployeeUsage } from './EmployeeProfile';
 
@@ -12,6 +13,7 @@ type Props = {
   onOpenUsage?: () => void;
   onOpenOffice?: () => void;
   onOpenQuarter?: () => void;
+  onCatalogChange?: (activeId: string) => void;
 };
 
 export function EmployeeRoster({
@@ -22,6 +24,7 @@ export function EmployeeRoster({
   onOpenUsage,
   onOpenOffice,
   onOpenQuarter,
+  onCatalogChange,
 }: Props) {
   const working = rows.filter((r) => r.status === 'working');
   const finished = rows.filter((r) => r.status !== 'working');
@@ -93,6 +96,7 @@ export function EmployeeRoster({
       </section>
 
       <div className="mt-auto flex flex-col gap-2">
+        <CatalogSwitcher onChange={onCatalogChange} />
         {onOpenQuarter && (
           <button
             type="button"

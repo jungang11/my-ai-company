@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getActiveCatalog } from '@core/catalogs/loader';
+import type { CatalogOverride } from '@core/catalogs/types';
 import type { EmployeeEffort, EmployeeProfile as PublicProfile } from '../../shared/ipc.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -19,8 +21,25 @@ export function toPublic(p: EmployeeProfile): PublicProfile {
 }
 
 /**
+ * 활성 catalog의 직원 id별 override를 base profile에 merge.
+ * vendor / model / effort 만 override (systemPrompt는 base 그대로 — cache hit 보존).
+ */
+function applyCatalogOverride(base: EmployeeProfile): EmployeeProfile {
+  const catalog = getActiveCatalog(projectRoot);
+  if (!catalog) return base;
+  const override: CatalogOverride | undefined = catalog.overrides[base.id];
+  if (!override) return base;
+  return {
+    ...base,
+    ...(override.vendor !== undefined ? { vendor: override.vendor } : {}),
+    ...(override.model !== undefined ? { model: override.model } : {}),
+    ...(override.effort !== undefined ? { effort: override.effort } : {}),
+  };
+}
+
+/**
  * core/employees/*.json 전부를 결정적 순서로 read. prompt cache hit 보존을 위해
- * 파일명 + id 두 단계 정렬.
+ * 파일명 + id 두 단계 정렬. 활성 catalog override 적용.
  */
 export function listEmployees(): EmployeeProfile[] {
   const files = readdirSync(EMPLOYEES_DIR)
@@ -34,7 +53,8 @@ export function listEmployees(): EmployeeProfile[] {
         return null;
       }
     })
-    .filter((x): x is EmployeeProfile => x !== null);
+    .filter((x): x is EmployeeProfile => x !== null)
+    .map(applyCatalogOverride);
   return entries.sort((a, b) => a.id.localeCompare(b.id));
 }
 
@@ -42,7 +62,8 @@ export function getEmployee(id: string): EmployeeProfile | null {
   const path = resolve(EMPLOYEES_DIR, `${id}.json`);
   if (!existsSync(path)) return null;
   try {
-    return JSON.parse(readFileSync(path, 'utf-8')) as EmployeeProfile;
+    const base = JSON.parse(readFileSync(path, 'utf-8')) as EmployeeProfile;
+    return applyCatalogOverride(base);
   } catch {
     return null;
   }

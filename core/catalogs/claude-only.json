@@ -1,0 +1,13 @@
+{
+  "id": "claude-only",
+  "name": "Claude only (default)",
+  "description": "6명 모두 Anthropic Claude. 기본 상태. Claude Max 구독에 적합.",
+  "overrides": {
+    "pm": { "vendor": "anthropic", "model": "claude-opus-4-7", "effort": "xhigh" },
+    "dev-1": { "vendor": "anthropic", "model": "claude-opus-4-6", "effort": "xhigh" },
+    "dev-arch": { "vendor": "anthropic", "model": "claude-opus-4-7", "effort": "xhigh" },
+    "planner-1": { "vendor": "anthropic", "model": "claude-opus-4-7", "effort": "xhigh" },
+    "qa-1": { "vendor": "anthropic", "model": "claude-sonnet-4-6", "effort": "high" },
+    "utility-1": { "vendor": "anthropic", "model": "claude-haiku-4-5-20251001", "effort": "low" }
+  }
+}

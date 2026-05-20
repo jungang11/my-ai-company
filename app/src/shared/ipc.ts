@@ -12,7 +12,24 @@ export const IPC = {
   quartersCurrent: 'quarters:current',
   quartersStart: 'quarters:start',
   quartersList: 'quarters:list',
+  catalogsList: 'catalogs:list',
+  catalogsActive: 'catalogs:active',
+  catalogsSetActive: 'catalogs:setActive',
 } as const;
+
+export type CatalogOverride = {
+  vendor?: Vendor;
+  model?: string;
+  effort?: EmployeeEffort;
+  fallbackModel?: string;
+};
+
+export type Catalog = {
+  id: string;
+  name: string;
+  description: string;
+  overrides: Record<string, CatalogOverride>;
+};
 
 export type QuarterMeta = {
   quarterId: string;

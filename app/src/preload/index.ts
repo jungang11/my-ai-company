@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import {
   IPC,
+  type Catalog,
   type EmployeeProfile,
   type PMExitPayload,
   type PMOutputPayload,
@@ -50,6 +51,10 @@ const api = {
     previousRetro?: string;
   }): Promise<QuarterMeta> => ipcRenderer.invoke(IPC.quartersStart, args),
   listQuarters: (): Promise<QuarterMeta[]> => ipcRenderer.invoke(IPC.quartersList),
+  listCatalogs: (): Promise<Catalog[]> => ipcRenderer.invoke(IPC.catalogsList),
+  fetchActiveCatalog: (): Promise<string> => ipcRenderer.invoke(IPC.catalogsActive),
+  setActiveCatalog: (id: string): Promise<string> =>
+    ipcRenderer.invoke(IPC.catalogsSetActive, id),
 };
 
 contextBridge.exposeInMainWorld('api', api);

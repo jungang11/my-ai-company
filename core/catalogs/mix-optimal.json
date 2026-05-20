@@ -1,0 +1,13 @@
+{
+  "id": "mix-optimal",
+  "name": "Mix Optimal (사장 조정)",
+  "description": "사장이 분기마다 조정하는 최적 mix. PM + dev-arch는 Claude 정확도, dev-1/qa-1/utility-1은 GPT 비용 효율, planner-1은 외부 리서치라 GPT-5.5 + browse.",
+  "overrides": {
+    "pm": { "vendor": "anthropic", "model": "claude-opus-4-7", "effort": "xhigh" },
+    "dev-1": { "vendor": "openai", "model": "gpt-5.3-codex", "effort": "high" },
+    "dev-arch": { "vendor": "anthropic", "model": "claude-opus-4-7", "effort": "max" },
+    "planner-1": { "vendor": "openai", "model": "gpt-5.5", "effort": "high" },
+    "qa-1": { "vendor": "openai", "model": "gpt-5.4", "effort": "medium" },
+    "utility-1": { "vendor": "openai", "model": "gpt-5.3-codex-spark", "fallbackModel": "gpt-5.4-mini", "effort": "low" }
+  }
+}

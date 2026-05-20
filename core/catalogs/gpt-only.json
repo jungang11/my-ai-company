@@ -1,0 +1,13 @@
+{
+  "id": "gpt-only",
+  "name": "GPT only",
+  "description": "6명 모두 OpenAI GPT/Codex (ChatGPT Pro 구독 활용, OAuth). Claude 한도 0일 때.",
+  "overrides": {
+    "pm": { "vendor": "openai", "model": "gpt-5.5", "effort": "max" },
+    "dev-1": { "vendor": "openai", "model": "gpt-5.3-codex", "effort": "high" },
+    "dev-arch": { "vendor": "openai", "model": "gpt-5.3-codex", "effort": "max" },
+    "planner-1": { "vendor": "openai", "model": "gpt-5.5", "effort": "high" },
+    "qa-1": { "vendor": "openai", "model": "gpt-5.4", "effort": "medium" },
+    "utility-1": { "vendor": "openai", "model": "gpt-5.3-codex-spark", "fallbackModel": "gpt-5.4-mini", "effort": "low" }
+  }
+}

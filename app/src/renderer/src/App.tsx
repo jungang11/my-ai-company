@@ -236,6 +236,9 @@ export function App() {
           onOpenUsage={() => setUsageOpen(true)}
           onOpenOffice={() => setOfficeOpen(true)}
           onOpenQuarter={() => setQuarterOpen(true)}
+          onCatalogChange={() => {
+            window.api.fetchEmployees().then(setProfiles).catch(() => {});
+          }}
         />
         <div className="flex flex-1 flex-col ring-1 ring-slate-800">
           <Chat messages={messages} onSend={send} pending={pmPending} />

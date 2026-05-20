@@ -1,0 +1,13 @@
+{
+  "id": "pm-claude-rest-gpt",
+  "name": "PM Claude + 나머지 GPT",
+  "description": "사장 직통 PM은 Claude 정확도 유지(opus-4-7), sub-agent 5명은 GPT/Codex로 비용 효율. **사장 결정 3: 첫 시연 catalog.**",
+  "overrides": {
+    "pm": { "vendor": "anthropic", "model": "claude-opus-4-7", "effort": "xhigh" },
+    "dev-1": { "vendor": "openai", "model": "gpt-5.3-codex", "effort": "high" },
+    "dev-arch": { "vendor": "openai", "model": "gpt-5.3-codex", "effort": "max" },
+    "planner-1": { "vendor": "openai", "model": "gpt-5.5", "effort": "high" },
+    "qa-1": { "vendor": "openai", "model": "gpt-5.4", "effort": "medium" },
+    "utility-1": { "vendor": "openai", "model": "gpt-5.3-codex-spark", "fallbackModel": "gpt-5.4-mini", "effort": "low" }
+  }
+}
