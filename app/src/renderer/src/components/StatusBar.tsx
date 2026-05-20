@@ -4,6 +4,7 @@ type Props = {
   init: StatusInit | null;
   status: StatusSnapshot | null;
   quarter: QuarterMeta | null;
+  catalogName: string;
 };
 
 function formatTokens(n: number): string {
@@ -50,7 +51,12 @@ function shortQuarterTitle(q: QuarterMeta | null): string {
   return t.length <= 18 ? t : t.slice(0, 17) + '…';
 }
 
-export function StatusBar({ init, status, quarter }: Props) {
+function shortCatalogName(name: string): string {
+  if (name.length <= 20) return name;
+  return name.slice(0, 19) + '…';
+}
+
+export function StatusBar({ init, status, quarter, catalogName }: Props) {
   // ctx = 마지막 turn에서 PM이 실제 사용한 context window 점유분.
   // = fresh input + cache read (이전 turn 누적이 cache로 hit) + cache creation (새 cache).
   // 1M 한도 대비 몇 % 차지하고 있는지 사장이 한 turn 기준으로 보고 싶어함.
@@ -81,9 +87,14 @@ export function StatusBar({ init, status, quarter }: Props) {
         <span className="text-slate-500">branch</span> {init?.branch ?? '?'}
       </span>
       <span className="text-slate-600">·</span>
-      <span>
+      <span title="마지막 응답 model (사장 메시지 후 갱신)">
         <span className="text-slate-500">model</span>{' '}
         <span className="text-emerald-400">{status?.model || '?'}</span>
+      </span>
+      <span className="text-slate-600">·</span>
+      <span title="활성 catalog (CatalogSwitcher에서 변경)">
+        <span className="text-slate-500">catalog</span>{' '}
+        <span className="text-sky-300">{shortCatalogName(catalogName)}</span>
       </span>
       <span className="text-slate-600">·</span>
       <span title={quarter?.description || quarter?.title || '분기 정보 없음'}>

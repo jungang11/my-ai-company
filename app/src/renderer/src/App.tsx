@@ -77,6 +77,7 @@ export function App() {
   const [officeOpen, setOfficeOpen] = useState(false);
   const [quarterOpen, setQuarterOpen] = useState(false);
   const [currentQuarter, setCurrentQuarter] = useState<QuarterMeta | null>(null);
+  const [activeCatalogName, setActiveCatalogName] = useState<string>('claude-only');
 
   useEffect(() => {
     if (!window.api) {
@@ -97,6 +98,12 @@ export function App() {
     window.api.fetchCurrentQuarter().then(setCurrentQuarter).catch((err) => {
       console.error('[payroll-os] fetchCurrentQuarter failed:', err);
     });
+    Promise.all([window.api.fetchActiveCatalog(), window.api.listCatalogs()])
+      .then(([id, list]) => {
+        const found = list.find((c) => c.id === id);
+        setActiveCatalogName(found?.name ?? id);
+      })
+      .catch(() => {});
     // 앱 시작 시 workspace/sessions의 done 마커 있는 과거 세션을 historical 카드로 복원.
     window.api
       .fetchHistoricalRoster()
@@ -238,13 +245,24 @@ export function App() {
           onOpenQuarter={() => setQuarterOpen(true)}
           onCatalogChange={() => {
             window.api.fetchEmployees().then(setProfiles).catch(() => {});
+            Promise.all([window.api.fetchActiveCatalog(), window.api.listCatalogs()])
+              .then(([id, list]) => {
+                const found = list.find((c) => c.id === id);
+                setActiveCatalogName(found?.name ?? id);
+              })
+              .catch(() => {});
           }}
         />
         <div className="flex flex-1 flex-col ring-1 ring-slate-800">
           <Chat messages={messages} onSend={send} pending={pmPending} />
         </div>
       </div>
-      <StatusBar init={statusInit} status={status} quarter={currentQuarter} />
+      <StatusBar
+        init={statusInit}
+        status={status}
+        quarter={currentQuarter}
+        catalogName={activeCatalogName}
+      />
       <SubSessionDetail row={selectedRow} onClose={() => setSelectedSessionId(null)} />
       {usageOpen && (
         <UsagePanel
