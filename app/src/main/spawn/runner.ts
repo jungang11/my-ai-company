@@ -8,8 +8,9 @@ import {
   SESSIONS_DIR,
   type SpawnRequest,
 } from '@core/spawn/protocol';
+import { getEmployee } from '../employee/manager.js';
 import { StatusTracker } from '../status.js';
-import type { SubSessionMetrics } from '../../shared/ipc.js';
+import type { SubSessionMetrics, Vendor } from '../../shared/ipc.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // __dirname = app/out/main → ../../.. = project root
@@ -21,6 +22,7 @@ type EmployeeDef = {
   role: string;
   systemPrompt: string;
   cliBackend: string;
+  vendor?: Vendor;
   model?: string;
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
   shortDescription?: string;
@@ -53,11 +55,12 @@ export type SubSessionCallback = (update: SubSessionUpdate) => void;
 const active = new Map<string, ChildProcessWithoutNullStreams>();
 
 function loadEmployee(employeeId: string): EmployeeDef {
-  const path = resolve(projectRoot, 'core/employees', `${employeeId}.json`);
-  if (!existsSync(path)) {
-    throw new Error(`employee 정의 없음: ${path}`);
+  // manager.getEmployee — 활성 catalog override(vendor/model/effort) 자동 적용.
+  const emp = getEmployee(employeeId);
+  if (!emp) {
+    throw new Error(`employee 정의 없음: ${employeeId}`);
   }
-  return JSON.parse(readFileSync(path, 'utf-8')) as EmployeeDef;
+  return emp as EmployeeDef;
 }
 
 function ensureSessionDir(sessionId: string): string {
@@ -77,6 +80,13 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
     // 일반적으론 발생하지 않지만, 사장 손편집/race로 가능 — 사일런트 무시 대신 명시.
     throw new Error(`employee ${req.employeeId} is inactive — spawn denied`);
   }
+
+  // vendor 분기 — openai 직원은 codex CLI subprocess (PR3 stub).
+  if (employee.vendor === 'openai') {
+    runCodexSession(req, employee, cb);
+    return;
+  }
+
   const sessionDir = ensureSessionDir(req.id);
   const outputPath = resolve(sessionDir, OUTPUT_LOG_NAME);
   const donePath = resolve(sessionDir, DONE_MARKER_NAME);
@@ -222,6 +232,67 @@ function handleLine(
     }
   }
   return null;
+}
+
+/**
+ * Codex CLI subprocess stub — PR3a 단계.
+ *
+ * 다음 단계 (PR3b, 사장 OAuth 후):
+ * 1. `cd app && npm install @openai/codex`
+ * 2. `codex login` (ChatGPT Pro OAuth)
+ * 3. 본 stub을 실제 `spawn('codex', ['exec', '--json', ...], ...)`로 교체
+ * 4. codex JSONL 스키마 parser 작성 (claude와 다름 — codex는 'message.delta' 류)
+ *
+ * 현재 stub은 spawn 메커니즘 작동 확인 + 사장 안내 메시지 출력만.
+ */
+function runCodexSession(
+  req: SpawnRequest,
+  employee: EmployeeDef,
+  cb: SubSessionCallback,
+): void {
+  const sessionDir = ensureSessionDir(req.id);
+  const outputPath = resolve(sessionDir, OUTPUT_LOG_NAME);
+  const donePath = resolve(sessionDir, DONE_MARKER_NAME);
+  const startedAt = Date.now();
+
+  const stub =
+    `[Codex 직원 stub — PR3a]\n` +
+    `직원: ${employee.name} (${employee.id})\n` +
+    `vendor: openai, model: ${employee.model}\n` +
+    `일감: ${req.prompt}\n\n` +
+    `사장님, Codex spawn 메커니즘은 현재 stub입니다. 실제 동작을 위해:\n` +
+    `1. cd app && npm install @openai/codex\n` +
+    `2. codex login (ChatGPT Pro OAuth — 한 번만)\n` +
+    `3. PR3b commit으로 실제 codex CLI 호출 활성화\n\n` +
+    `현재 catalog가 'claude-only'면 이 메시지는 안 보입니다. ` +
+    `다른 catalog(gpt-only / pm-claude-rest-gpt / mix-optimal)에서만 작동.\n`;
+
+  writeFileSync(outputPath, stub, 'utf-8');
+  const metrics: SubSessionMetrics = {
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheReadTokens: 0,
+    cacheCreationTokens: 0,
+    costUsd: 0,
+  };
+  writeFileSync(
+    donePath,
+    JSON.stringify({ exitCode: 0, endedAt: new Date().toISOString(), metrics }, null, 2),
+    'utf-8',
+  );
+
+  cb({ kind: 'started', sessionId: req.id, employee, prompt: req.prompt, startedAt });
+  cb({ kind: 'chunk', sessionId: req.id, text: stub });
+  cb({
+    kind: 'done',
+    sessionId: req.id,
+    exitCode: 0,
+    endedAt: Date.now(),
+    metrics,
+    employee,
+    prompt: req.prompt,
+    output: stub,
+  });
 }
 
 export function killSub(sessionId: string): void {

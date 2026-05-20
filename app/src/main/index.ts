@@ -249,7 +249,7 @@ app.whenReady().then(() => {
     wireSpawnWatcher();
     wireEmployeeRegistry();
     wireQuartersHandlers(pmCallbacks);
-    wireCatalogsHandlers();
+    wireCatalogsHandlers(pmCallbacks);
   });
 
   app.on('activate', () => {
@@ -260,7 +260,7 @@ app.whenReady().then(() => {
         wireSpawnWatcher();
         wireEmployeeRegistry();
         wireQuartersHandlers(pmCallbacks);
-    wireCatalogsHandlers();
+    wireCatalogsHandlers(pmCallbacks);
       });
     }
   });
