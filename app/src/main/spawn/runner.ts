@@ -269,6 +269,7 @@ function runCodexSession(
     '--json',
     '--color', 'never',
     '--skip-git-repo-check',
+    '-s', 'workspace-write', // read + write 명시. --dangerously-bypass와 함께 tool 권한 확실히 부여.
     '--dangerously-bypass-approvals-and-sandbox',
     '-C', projectRoot,
     '-o', lastMsgPath,
@@ -380,20 +381,58 @@ function runCodexSession(
   proc.stdin.end();
 }
 
-/** codex `--json` JSONL 한 줄에서 사용자에게 보일 텍스트만 추출. 미지의 이벤트는 null. */
+/**
+ * codex `--json` JSONL 한 줄에서 사용자에게 보일 텍스트만 추출.
+ *
+ * 알려진 이벤트 type (codex 0.131.0 시연 기반):
+ * - thread.started / turn.started / turn.completed: 진행 신호, 표시 X
+ * - error / turn.failed: 사장에게 명시 (인증 만료 등)
+ * - assistant_message / message: 응답 텍스트
+ * - item.created / message.delta: stream chunk
+ * - tool_call: tool 사용 (간단 진행만)
+ *
+ * stderr는 별도 처리 (codex_core 로그 등).
+ */
 function handleCodexLine(line: string): string | null {
+  // codex가 일반 plain text를 stdout에 쓸 때도 있음 (특히 stderr 미스 redirect).
+  if (!line.startsWith('{')) {
+    // ANSI escape / 로그 line은 표시 안 함 (시연 잡음 줄임).
+    if (line.includes('ERROR') || line.includes('WARN')) return null;
+    return line + '\n';
+  }
   let event: unknown;
   try {
     event = JSON.parse(line);
   } catch {
-    // JSON 아니면 plain text — 그대로 chunk 표시.
-    return line + '\n';
+    return null;
   }
   if (typeof event !== 'object' || event === null) return null;
   const e = event as Record<string, unknown>;
+  const type = typeof e['type'] === 'string' ? (e['type'] as string) : '';
 
-  // codex JSONL 스키마는 확정 X — 추측 기반 파싱 (실 데이터로 보강).
-  // 흔한 필드: type / message / content / delta / role
+  // 진행 신호는 표시 X (사장 화면에 thread.started 같은 메타 노출 X).
+  if (type === 'thread.started' || type === 'turn.started' || type === 'turn.completed') {
+    return null;
+  }
+
+  // 에러 이벤트 — 사장에게 명시. 특히 인증 만료 패턴 자주 발생.
+  if (type === 'error' || type === 'turn.failed') {
+    const msg =
+      (typeof e['message'] === 'string' && (e['message'] as string)) ||
+      (typeof e['error'] === 'object' &&
+        e['error'] !== null &&
+        typeof (e['error'] as Record<string, unknown>)['message'] === 'string' &&
+        ((e['error'] as Record<string, unknown>)['message'] as string)) ||
+      JSON.stringify(e);
+    let advice = '';
+    if (msg.includes('refresh') || msg.includes('token') || msg.includes('Unauthorized')) {
+      advice =
+        '\n\n[fix] codex 인증 만료. powershell에서: `codex logout` → `codex login` 후 재시도.';
+    }
+    return `[codex error] ${msg}${advice}\n`;
+  }
+
+  // 응답 message — 다양한 필드 시도.
   if (typeof e['message'] === 'string') return `${e['message']}\n`;
   if (typeof e['content'] === 'string') return `${e['content']}\n`;
   const delta = e['delta'];
@@ -402,8 +441,16 @@ function handleCodexLine(line: string): string | null {
     const d = delta as Record<string, unknown>;
     if (typeof d['text'] === 'string') return d['text'] as string;
   }
-  // 알 수 없는 이벤트는 raw JSON 한 줄로 표시 (디버그 도움).
-  return `${line}\n`;
+  // item.created 등 nested item에 응답 들어있는 경우.
+  const item = e['item'];
+  if (item && typeof item === 'object') {
+    const it = item as Record<string, unknown>;
+    if (typeof it['text'] === 'string') return `${it['text']}\n`;
+    if (typeof it['content'] === 'string') return `${it['content']}\n`;
+  }
+
+  // 알 수 없는 이벤트는 표시 X (raw JSON 노출 회피). 디버그 필요시 stderr 로그로.
+  return null;
 }
 
 function emptyMetrics(): SubSessionMetrics {
