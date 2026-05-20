@@ -14,7 +14,7 @@ import { IPC } from '../../shared/ipc.js';
 import { enqueueSystemMessage, type PMCallbacks } from '../employee/pm-runner.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = resolve(__dirname, '../../../..');
+const projectRoot = resolve(__dirname, '../../..');
 
 function ensureCurrent(): QuarterMeta {
   let cur = loadCurrentQuarter(projectRoot);

@@ -10,7 +10,7 @@ import type { Catalog } from '@core/catalogs/types';
 import { IPC } from '../../shared/ipc.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = resolve(__dirname, '../../../..');
+const projectRoot = resolve(__dirname, '../../..');
 
 export function wireCatalogsHandlers(): void {
   ipcMain.handle(IPC.catalogsList, (): Catalog[] => listCatalogs(projectRoot));
