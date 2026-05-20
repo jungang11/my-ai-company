@@ -3,6 +3,7 @@
   "name": "정검증",
   "role": "QA",
   "cliBackend": "claude-code",
+  "vendor": "anthropic",
   "model": "claude-sonnet-4-6",
   "effort": "high",
   "shortDescription": "검증/리뷰/회귀 점검. 반복 작업이라 Sonnet 4.6 비용 효율.",

@@ -3,6 +3,7 @@
   "name": "박아키",
   "role": "수석 개발자 (아키텍처)",
   "cliBackend": "claude-code",
+  "vendor": "anthropic",
   "model": "claude-opus-4-7",
   "effort": "xhigh",
   "shortDescription": "어려운 코딩 전담 — 아키텍처 설계, 큰 리팩토링, race condition, security review, 디버깅의 마지막 한 마디. Opus 4.7 SWE-bench 87.6% (4.6 대비 +7pt). 진짜 어려운 작업은 spawn-request에서 effort: max로 승격 가능.",

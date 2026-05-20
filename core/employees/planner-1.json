@@ -3,6 +3,7 @@
   "name": "이기획",
   "role": "기획자",
   "cliBackend": "claude-code",
+  "vendor": "anthropic",
   "model": "claude-opus-4-7",
   "effort": "xhigh",
   "shortDescription": "분석/리서치/문서화. 긴 추론 + 1M context로 큰 자료 처리.",

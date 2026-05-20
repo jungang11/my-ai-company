@@ -27,11 +27,15 @@ export type QuarterMeta = {
 
 export type EmployeeEffort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
+/** Model vendor — 한 직원이 어느 vendor의 모델로 spawn되는지. cliBackend(어느 CLI)와는 별개 추적 dimension. */
+export type Vendor = 'anthropic' | 'openai';
+
 export type EmployeeProfile = {
   id: string;
   name: string;
   role: string;
   cliBackend: string;
+  vendor?: Vendor; // default 'anthropic' (생략 시 anthropic)
   model?: string;
   effort?: EmployeeEffort;
   shortDescription?: string;

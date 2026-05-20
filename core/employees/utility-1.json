@@ -3,6 +3,7 @@
   "name": "막내",
   "role": "잡일",
   "cliBackend": "claude-code",
+  "vendor": "anthropic",
   "model": "claude-haiku-4-5-20251001",
   "effort": "low",
   "shortDescription": "단순 잡일 sub-agent — 분류·추출·포맷·짧은 요약·lookup. Haiku 4.5 + low. 비용 거의 무료, 80~120 tok/s 매우 빠름. Anthropic이 공식적으로 sub-agent task에 권장한 모델.",

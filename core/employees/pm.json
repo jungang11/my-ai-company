@@ -3,6 +3,7 @@
   "name": "박PM",
   "role": "PM",
   "cliBackend": "claude-code",
+  "vendor": "anthropic",
   "model": "claude-opus-4-7",
   "effort": "xhigh",
   "shortDescription": "사장 직통 PM. 일감 분할/위임/통합. 사장이 직원 지정 안 해도 본인이 적합한 직원 골라서 Task tool로 spawn.",

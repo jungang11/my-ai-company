@@ -1,7 +1,13 @@
 # Model Routing Plan — 모델 vendor 전환 시스템
 
 > 사장 안건 (2026-05-19): Claude Pro + GPT Pro 가정. 모델 vendor 딸깍 전환 + GPT/Codex 직군 매핑 + 토큰 사용량 추적.
-> 상태: **draft**, 사장 검토 대기.
+> 상태: **approved** (사장 결정 안건 4개 통보 완료, 2026-05-19). PR1부터 진행 중.
+>
+> ## 사장 결정 (2026-05-19)
+> 1. **GPT 인증 = OAuth only**. ChatGPT Pro 구독은 API key 안 열어줌 — Codex CLI OAuth 로그인으로만 Pro 한도 활용. per-token API 비용 발생 X.
+> 2. **PR 진행 = 순차** (PR1 → PR2 → PR3 → ...)
+> 3. **첫 시연 catalog = `pm-claude-rest-gpt`** (PM만 Claude, 나머지 GPT/Codex)
+> 4. **utility-1 = Spark + GPT-5.4-mini fallback**
 
 ---
 
@@ -32,11 +38,13 @@
 - GPT-5.5-Codex-Spark는 **Pro 전용 research preview** 접근.
 - Plus 기준 GPT-5.5 메시지: 160/3h, thinking 3000/주.
 
-**Codex CLI 통합**:
+**Codex CLI 통합** (사장 결정 1: OAuth only):
 - `@openai/codex` npm package — Rust binary wrapped TypeScript SDK (Node 18+).
+- 인증: **`codex login` OAuth 1회** → token cache 자동 사용. **API key 안 씀** (ChatGPT Pro에 API 한도 X, per-token 결제 회피).
+- 사용량 = ChatGPT Pro 구독 한도 (GPT-5.5 5x Plus / Codex 10x Plus / Spark Pro 전용).
 - subprocess spawn + JSONL stdin/stdout (claude CLI와 동일 패턴).
-- 환경변수 `CODEX_API_KEY` 또는 OAuth ChatGPT Pro 연동.
 - payroll-os `core/spawn/` watcher 패턴 그대로 재사용 가능.
+- 토큰 추적 = OpenAI Usage API 안 씀 (API 결제 X). 대신: Codex CLI 응답의 rate limit 헤더 또는 자체 메시지 count (Pro 한도 추정).
 
 출처: [openai.com/api/pricing](https://openai.com/api/pricing/), [GPT-5.5 in ChatGPT](https://help.openai.com/en/articles/11909943-gpt-5-in-chatgpt), [Codex CLI](https://developers.openai.com/codex/cli), [@openai/codex npm](https://www.npmjs.com/package/@openai/codex), [GPT-5.3-Codex blog](https://openai.com/index/introducing-gpt-5-3-codex/).
 
@@ -86,7 +94,10 @@ export type StatusSnapshot = {
 
 ### 한도 추적
 - **Anthropic**: 기존 `rate_limit_event` (5h / 7d) 그대로.
-- **OpenAI**: ChatGPT Pro는 weekly cap (Codex 10x Plus). API 호출 시 헤더 `x-ratelimit-*` 파싱 또는 [Usage API](https://platform.openai.com/usage) polling.
+- **OpenAI (OAuth, 사장 결정 1)**: Usage API 안 씀 (API 결제 X). 추적 옵션:
+  - (a) Codex CLI 응답에 rate limit 헤더 있으면 파싱
+  - (b) 메시지 count 직접 카운트 (Pro 한도 = GPT-5.5 800/3h 정도, Codex 한도는 명시 안 됨 → 보수적으로 메시지 수 누적)
+  - (c) Spark는 preview라 한도 측정 X — 폴백 트리거만 (Spark 실패 → 5.4-mini)
 
 ### 임계 알림
 - 한 vendor의 quotaUsedRatio ≥ 0.8 시 PM이 사장에게 시스템 알림 (enqueueSystemMessage):
@@ -163,7 +174,7 @@ export type StatusSnapshot = {
 
 | 리스크 | 대안 |
 |---|---|
-| Codex CLI OAuth (ChatGPT Pro 연동)이 Electron에서 동작 X | API key fallback (`CODEX_API_KEY` env), 사장이 .env에 박음 |
+| Codex CLI OAuth (ChatGPT Pro 연동)이 Electron에서 동작 X | OAuth는 CLI subprocess가 시스템 keychain 사용 → Electron renderer 무관. main process가 codex CLI spawn하면 정상 동작 (claude CLI와 동일 메커니즘) |
 | GPT 모델 응답 형식이 Claude와 달라 PM 통합 보고 깨짐 | vendor-aware parser + 각 vendor용 시스템 프롬프트 catalog |
 | OpenAI usage API polling이 너무 무거움 | 헤더 기반 rate limit 추적 + 24h 1회 usage API sync |
 | Spark가 preview라 갑자기 종료 | utility-1 GPT 매핑은 GPT-5.4-mini fallback 준비 |
@@ -182,10 +193,10 @@ export type StatusSnapshot = {
 
 ## 사장 결정 안건
 
-1. **GPT 인증 방식** — Codex CLI OAuth (ChatGPT Pro 로그인) vs API key (`CODEX_API_KEY` env). 추천: **둘 다 지원, OAuth 우선 + API key fallback**.
-2. **PR 진행 순서** — PR1/2 (인프라+preset) 먼저 → PR3 (실제 Codex spawn)? 또는 PR1/3 동시? 추천: **순차** (인프라 안정 후 spawn).
-3. **첫 시연 catalog** — `pm-claude-rest-gpt` (PM만 Claude)? `gpt-only` (전부 GPT)? 추천: **mix preset 사장이 결정 후 진입**.
-4. **utility-1 GPT 매핑** — Spark preview vs GPT-5.4-mini stable. 추천: **Spark 우선 + Spark unavailable 시 5.4-mini fallback**.
+1. ~~GPT 인증 방식~~ → **결정: OAuth only** (ChatGPT Pro에 API 안 열림, per-token 비용 회피)
+2. ~~PR 진행 순서~~ → **결정: 순차** (PR1 → PR2 → ... → PR6)
+3. ~~첫 시연 catalog~~ → **결정: `pm-claude-rest-gpt`** (PM은 Claude, 나머지 5명 GPT/Codex)
+4. ~~utility-1 매핑~~ → **결정: Spark + 5.4-mini fallback**
 
 ---
 
