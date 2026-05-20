@@ -235,15 +235,17 @@ function handleLine(
 }
 
 /**
- * Codex CLI subprocess stub — PR3a 단계.
+ * Codex CLI subprocess 실 구현 (PR3b).
  *
- * 다음 단계 (PR3b, 사장 OAuth 후):
- * 1. `cd app && npm install @openai/codex`
- * 2. `codex login` (ChatGPT Pro OAuth)
- * 3. 본 stub을 실제 `spawn('codex', ['exec', '--json', ...], ...)`로 교체
- * 4. codex JSONL 스키마 parser 작성 (claude와 다름 — codex는 'message.delta' 류)
+ * 명령: `codex exec --json --color never --skip-git-repo-check
+ *        --dangerously-bypass-approvals-and-sandbox -C <root> -m <model>
+ *        -o <last-msg-file>` + stdin으로 systemPrompt + 일감 결합 prompt 전달.
  *
- * 현재 stub은 spawn 메커니즘 작동 확인 + 사장 안내 메시지 출력만.
+ * - --json: 진행 이벤트를 stdout에 JSONL로 출력 (progress 표시용)
+ * - -o: 최종 응답 메시지를 별도 파일에 저장 (carbon copy)
+ * - --dangerously-bypass-approvals-and-sandbox: 권한 prompt 없이 자율 실행 (claude의 bypassPermissions와 동일)
+ *
+ * 사용량 = ChatGPT Pro 구독 한도 (OAuth, API key 미사용).
  */
 function runCodexSession(
   req: SpawnRequest,
@@ -253,46 +255,165 @@ function runCodexSession(
   const sessionDir = ensureSessionDir(req.id);
   const outputPath = resolve(sessionDir, OUTPUT_LOG_NAME);
   const donePath = resolve(sessionDir, DONE_MARKER_NAME);
+  const lastMsgPath = resolve(sessionDir, 'codex-last-msg.txt');
   const startedAt = Date.now();
 
-  const stub =
-    `[Codex 직원 stub — PR3a]\n` +
-    `직원: ${employee.name} (${employee.id})\n` +
-    `vendor: openai, model: ${employee.model}\n` +
-    `일감: ${req.prompt}\n\n` +
-    `사장님, Codex spawn 메커니즘은 현재 stub입니다. 실제 동작을 위해:\n` +
-    `1. cd app && npm install @openai/codex\n` +
-    `2. codex login (ChatGPT Pro OAuth — 한 번만)\n` +
-    `3. PR3b commit으로 실제 codex CLI 호출 활성화\n\n` +
-    `현재 catalog가 'claude-only'면 이 메시지는 안 보입니다. ` +
-    `다른 catalog(gpt-only / pm-claude-rest-gpt / mix-optimal)에서만 작동.\n`;
+  writeFileSync(outputPath, '', 'utf-8');
 
-  writeFileSync(outputPath, stub, 'utf-8');
-  const metrics: SubSessionMetrics = {
+  const combinedPrompt =
+    `[직원 시스템 프롬프트]\n${employee.systemPrompt}\n\n` +
+    `---\n[사장 일감]\n${req.prompt}`;
+
+  const args = [
+    'exec',
+    '--json',
+    '--color', 'never',
+    '--skip-git-repo-check',
+    '--dangerously-bypass-approvals-and-sandbox',
+    '-C', projectRoot,
+    '-o', lastMsgPath,
+  ];
+  if (employee.model) {
+    args.push('-m', employee.model);
+  }
+
+  let proc: ChildProcessWithoutNullStreams;
+  try {
+    proc = spawn('codex', args, {
+      cwd: projectRoot,
+      env: process.env,
+      shell: process.platform === 'win32',
+    }) as ChildProcessWithoutNullStreams;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const errOutput =
+      `[Codex spawn 실패]\n${msg}\n\n` +
+      `codex CLI 확인: \`codex --version\`. ChatGPT Pro OAuth: \`codex login\`.`;
+    writeFileSync(outputPath, errOutput, 'utf-8');
+    writeFileSync(
+      donePath,
+      JSON.stringify(
+        { exitCode: -1, endedAt: new Date().toISOString(), metrics: emptyMetrics() },
+        null,
+        2,
+      ),
+      'utf-8',
+    );
+    cb({ kind: 'started', sessionId: req.id, employee, prompt: req.prompt, startedAt });
+    cb({ kind: 'chunk', sessionId: req.id, text: errOutput });
+    cb({
+      kind: 'done',
+      sessionId: req.id,
+      exitCode: -1,
+      endedAt: Date.now(),
+      metrics: emptyMetrics(),
+      employee,
+      prompt: req.prompt,
+      output: errOutput,
+    });
+    return;
+  }
+
+  let accumulatedOutput = '';
+  active.set(req.id, proc);
+
+  cb({ kind: 'started', sessionId: req.id, employee, prompt: req.prompt, startedAt });
+
+  let stdoutBuf = '';
+  proc.stdout.on('data', (chunk: Buffer) => {
+    stdoutBuf += chunk.toString('utf-8');
+    let nl: number;
+    while ((nl = stdoutBuf.indexOf('\n')) !== -1) {
+      const line = stdoutBuf.slice(0, nl).trim();
+      stdoutBuf = stdoutBuf.slice(nl + 1);
+      if (!line) continue;
+      const text = handleCodexLine(line);
+      if (text) {
+        accumulatedOutput += text;
+        appendFileSync(outputPath, text, 'utf-8');
+        cb({ kind: 'chunk', sessionId: req.id, text });
+      }
+    }
+  });
+
+  proc.stderr.on('data', (chunk: Buffer) => {
+    const text = chunk.toString('utf-8');
+    appendFileSync(outputPath, `[stderr] ${text}`, 'utf-8');
+  });
+
+  proc.on('error', (err) => {
+    appendFileSync(outputPath, `\n[codex error] ${err.message}\n`, 'utf-8');
+  });
+
+  proc.on('exit', (code) => {
+    active.delete(req.id);
+    // 최종 응답은 -o 파일이 정답 (stdout JSONL은 progress).
+    let finalOutput = accumulatedOutput;
+    if (existsSync(lastMsgPath)) {
+      try {
+        const last = readFileSync(lastMsgPath, 'utf-8').trim();
+        if (last) finalOutput = last;
+      } catch {
+        /* ignore */
+      }
+    }
+    const exitCode = code ?? -1;
+    const metrics = emptyMetrics(); // codex JSON에서 토큰 추출은 PR3c 안건
+    writeFileSync(
+      donePath,
+      JSON.stringify({ exitCode, endedAt: new Date().toISOString(), metrics }, null, 2),
+      'utf-8',
+    );
+    cb({
+      kind: 'done',
+      sessionId: req.id,
+      exitCode,
+      endedAt: Date.now(),
+      metrics,
+      employee,
+      prompt: req.prompt,
+      output: finalOutput,
+    });
+  });
+
+  proc.stdin.write(combinedPrompt);
+  proc.stdin.end();
+}
+
+/** codex `--json` JSONL 한 줄에서 사용자에게 보일 텍스트만 추출. 미지의 이벤트는 null. */
+function handleCodexLine(line: string): string | null {
+  let event: unknown;
+  try {
+    event = JSON.parse(line);
+  } catch {
+    // JSON 아니면 plain text — 그대로 chunk 표시.
+    return line + '\n';
+  }
+  if (typeof event !== 'object' || event === null) return null;
+  const e = event as Record<string, unknown>;
+
+  // codex JSONL 스키마는 확정 X — 추측 기반 파싱 (실 데이터로 보강).
+  // 흔한 필드: type / message / content / delta / role
+  if (typeof e['message'] === 'string') return `${e['message']}\n`;
+  if (typeof e['content'] === 'string') return `${e['content']}\n`;
+  const delta = e['delta'];
+  if (typeof delta === 'string') return delta;
+  if (delta && typeof delta === 'object') {
+    const d = delta as Record<string, unknown>;
+    if (typeof d['text'] === 'string') return d['text'] as string;
+  }
+  // 알 수 없는 이벤트는 raw JSON 한 줄로 표시 (디버그 도움).
+  return `${line}\n`;
+}
+
+function emptyMetrics(): SubSessionMetrics {
+  return {
     inputTokens: 0,
     outputTokens: 0,
     cacheReadTokens: 0,
     cacheCreationTokens: 0,
     costUsd: 0,
   };
-  writeFileSync(
-    donePath,
-    JSON.stringify({ exitCode: 0, endedAt: new Date().toISOString(), metrics }, null, 2),
-    'utf-8',
-  );
-
-  cb({ kind: 'started', sessionId: req.id, employee, prompt: req.prompt, startedAt });
-  cb({ kind: 'chunk', sessionId: req.id, text: stub });
-  cb({
-    kind: 'done',
-    sessionId: req.id,
-    exitCode: 0,
-    endedAt: Date.now(),
-    metrics,
-    employee,
-    prompt: req.prompt,
-    output: stub,
-  });
 }
 
 export function killSub(sessionId: string): void {
