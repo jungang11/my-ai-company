@@ -51,6 +51,8 @@ workspace/runtime/
 workspace/sessions/
 workspace/cache/
 workspace/spawn-request/
+workspace/quarters/
+workspace/active-catalog.json
 *.session.json
 
 # ===== Databases =====
