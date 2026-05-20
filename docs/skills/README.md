@@ -54,6 +54,7 @@ last_updated: YYYY-MM-DD
 |---|---|---|---|
 | [pixel-office-design](pixel-office-design.md) | stable | `app/src/renderer/src/components/pixel-office/*`, Phase 4 PR2.1~2.4 적용 완료 | 2026-05-19 |
 | [audio-design](audio-design.md) | research-complete | 카이로 톤 BGM/SFX, Electron audio API. agent 리서치 완료, 사장 검토 도장. Phase 6+ 도입 안건 | 2026-05-19 |
+| [karpathy-coding-discipline](karpathy-coding-discipline.md) | stable | LLM 코딩 4원칙 (Think Before Coding / Simplicity / Surgical / Goal-Driven). PR self-review 체크리스트. Import: multica-ai/andrej-karpathy-skills (MIT) | 2026-05-19 |
 
 ## 사용 흐름
 

@@ -1,7 +1,7 @@
 # 진행 현황 (세션 인수인계)
 
 > 새 세션에서 이 파일을 처음 읽고 바로 작업 이어갈 수 있도록 한 페이지로 정리한 진행표.
-> 갱신 시점: 2026-05-19 — Phase 5 PR1~14 + 퍼포먼스 PR4~5 + audio-design skill research-complete (사장 시연 대기).
+> 갱신 시점: 2026-05-19 — Phase 5 PR1~14 + 퍼포먼스 PR4~5 + audio-design + karpathy-coding-discipline + model-routing-plan draft.
 
 ---
 
@@ -240,11 +240,33 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 
 기타: `87109e1` EmployeeCard compact (사장 피드백), `febe016` benchmark.md S9~S11 분기 사이클 시나리오 확장.
 
-### J. 다음 라운드 후보 (사장 결정 안건)
+### J. 모델 vendor 전환 + karpathy skill (2026-05-19) — 사장 안건 리서치
+
+사장 안건: Claude Pro 다운그레이드 + GPT Pro 유지 가정. 모델 vendor 토글 + GPT/Codex 직군 매핑 + 토큰 추적.
+
+**리서치 산출**:
+- ✅ `docs/skills/karpathy-coding-discipline.md` (stable, MIT import) — Andrej Karpathy 4원칙(Think/Simplicity/Surgical/Goal-Driven) PR self-review 체크리스트
+- ✅ `docs/model-routing-plan.md` (draft, 사장 검토 대기) — GPT-5.5/5.4/5.3-Codex/Codex-Spark 카탈로그 (2026-05) + 직군 매핑 표 + 토큰 추적 설계 + 전환 UI 옵션 A/B/C + PR1~6 분해
+- ✅ CLAUDE.md 작업 원칙 8번 신규 — PR self-review 4원칙 참조
+
+**핵심 발견**:
+- ChatGPT Pro: GPT-5.5 5x 한도 (Plus 대비) + Codex 10x 한도 (2026-05-31까지 2x boost) + Spark research preview Pro 전용 접근
+- Codex CLI: `@openai/codex` npm — Rust binary subprocess + JSONL stdin/stdout (claude CLI와 동일 패턴 → `core/spawn/` watcher 재사용 가능)
+- 직군 매핑: PM/planner-1 → GPT-5.5, dev-1/dev-arch → GPT-5.3-Codex, qa-1 → GPT-5.4, utility-1 → Spark(preview) + GPT-5.4-mini fallback
+
+**사장 결정 안건** (4개, `docs/model-routing-plan.md`에 명시):
+1. GPT 인증: OAuth vs API key. 추천 — 둘 다 (OAuth 우선).
+2. PR 진행 순서: PR1/2 → PR3 순차. 추천 — 순차.
+3. 첫 시연 catalog: `pm-claude-rest-gpt` (PM만 Claude).
+4. utility-1 매핑: Spark + 5.4-mini fallback.
+
+### K. 다음 라운드 후보 (사장 결정 안건)
+- **model-routing-plan PR1부터** — vendor 추상화 (`shared/ipc.ts` + `core/employees/*.json` field 추가)
 - **사장 시연** — `docs/benchmark.md` S1~S11 + 분기 사이클(시작/회고/archive) 흐름 검증
+- **karpathy 4원칙 직원 .md 임베드** — 각 sub-agent system prompt에 self-review 4줄 추가 (다음 라운드 후보 from karpathy-coding-discipline.md)
 - **audio 실제 도입** — 사장 audio 패스 결정. 다음 사장 결정 변경 시 PR1~3 도입.
-- **외부 CLI 재개** — Codex/Gemini/Figma 구독 시점에 phase3-plan PR1부터
-- **push 일괄 처리** — personal swap 후 75+ commit push
+- **외부 CLI 재개** — Codex/Gemini/Figma 구독 시점에 phase3-plan PR1부터 (본 plan이 phase3 사실상 갱신)
+- **push 일괄 처리** — personal swap 후 78+ commit push
 - **시연 자동화 도구** — benchmark 클릭 한 번 spawn (큰 PR)
 - **Phase 6 비전** — 사장 통보 시
 

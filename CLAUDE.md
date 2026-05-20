@@ -53,6 +53,12 @@ audio-design skill research-complete (사장 audio 도입 패스). 자세한 현
    리서치 agent → skill 신규. 같은 영역 두 번 이상 다룰 예정이거나 사장이
    "리서치 → 정착" 명시 지시한 경우만 신규. 남발 X.
 
+8. **PR self-review 4원칙** ([`docs/skills/karpathy-coding-discipline.md`](docs/skills/karpathy-coding-discipline.md)).
+   PR commit 직전 한 번 돌려라: Think Before Coding(짐작 0) / Simplicity
+   First(요청 범위만) / Surgical Changes(인접 코드 X) / Goal-Driven Execution
+   (본인이 검증 돌리고 결과 인용). 4+ 파일 architecture 변경에 필수, 1줄
+   fix엔 선택. Import 출처: multica-ai/andrej-karpathy-skills (MIT).
+
 ## 새 세션 진입 절차
 
 1. `README.md` → `docs/PROGRESS.md` 순서로 읽기. 필요 시 `docs/models.md`,
