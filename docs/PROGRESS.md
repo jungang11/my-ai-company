@@ -1,19 +1,32 @@
 # 진행 현황 (세션 인수인계)
 
 > 새 세션에서 이 파일을 처음 읽고 바로 작업 이어갈 수 있도록 한 페이지로 정리한 진행표.
-> 갱신 시점: 2026-05-19 — Phase 5 PR1~14 + 퍼포먼스 PR4~5 + audio-design + karpathy-coding-discipline + model-routing-plan draft.
+> 갱신 시점: 2026-05-21 — Model Routing PR1~3 통과 (vendor 추상화 / catalog preset / Codex 실 spawn) + karpathy 임베드 + BenchmarkPanel 자동 시연 + 점수 추적.
 
 ---
 
 ## 한 줄 요약
 
-**Phase 1/2/3 부분/4(PR2.9까지) + Phase 5 시작(PR1~2) + 퍼포먼스 라운드(PR1~3, 시스템 프롬프트 강화 + benchmark)**. 사장 코스: 게임 polish → 업무 퍼포먼스 강화로 전환. PM 시스템 프롬프트에 위임 결정 표 + case 예시 + sanity check 추가, 직원 5명 .md에 자체 검증 강제 + 결과 형식 통일. `docs/benchmark.md` 시연 시나리오 8개 — 사장이 직접 시연해 정확도 측정 필요. 다음 라운드는 사장 시연 결과 → 회귀 보정 / PR4 메트릭 추적 / Phase 5 후속 비전 중 결정 대기.
+**Phase 1~5 full + 퍼포먼스 PR1~6 + audio/karpathy skills + model-routing PR1~3 + BenchmarkPanel 자동 시연 + 점수 추적**. 사장 본인 AI 구독을 "직원"으로 추상화한 회사 메타포. Claude/GPT vendor 토글(`pm-claude-rest-gpt`/`gpt-only`/`claude-only`/`mix-optimal` 4 catalog) + Codex CLI 실 subprocess + sub-agent별 검증 강화. 시연: 좌측 사이드바 catalog dropdown + "시연 시나리오 →" 모달 클릭 한 번에 spawn + ✅/△/✗ 평가 영속화. codex 인증 token single-use 이슈 — 매 logout/login 필요할 수 있음.
 
 ---
 
-## 누적 commit (push 가능 단위, origin 보다 74 ahead)
+## 누적 commit (push 가능 단위, origin 보다 88 ahead)
 
 ```
+4f3f54b core+app: BenchmarkPanel 점수 추적 (✅/△/✗ + 영속 + catalog별)
+71a6808 app: BenchmarkPanel 모달 — 시연 시나리오 11개 클릭 spawn
+1d9a85c core: karpathy 4원칙 PR self-review 직원 5명 .md 임베드 (퍼포먼스 PR6)
+9fc613d app: PR3b fix — codex JSONL parser 강화 + sandbox 권한 + 인증 에러 안내
+34f0d69 app: model-routing PR3b — Codex CLI 실제 spawn (stub → 실 구현)
+bd3382f app: StatusBar에 catalog 표시 추가 (사장 시연 피드백)
+7920e48 core+app: model-routing PR3a — vendor 분기 spawn + catalog PM 통지 (codex stub)
+304fd4e chore: workspace/quarters + active-catalog.json gitignore
+c1f33b3 fix: catalogs/quarters handlers projectRoot path (4→3단계)
+428f7c8 core+app: model-routing PR2 — catalog preset 시스템 (4 preset + override + CatalogSwitcher UI)
+5801d48 core+app: model-routing PR1 — vendor 추상화 (anthropic/openai)
+672cef6 docs: karpathy 4원칙 skill + model-routing-plan draft + PROGRESS/CLAUDE.md sync
+097e741 docs: Phase 5 stable 도장 — README/CLAUDE.md/phase5-plan sync + 구현 회고
 ab9c0c3 app+core: PR13/PR14/퍼포먼스 PR5 묶음 (Zones rose / 사장 자리 / planner+qa 회고 가이드)
 5762d97 app: Phase 5 PR12 — 회고 모드 시각 cue 분리 (회의 emerald / 회고 rose)
 7aeae31 core: PM 시스템 프롬프트 sanity check 패턴 강화 (퍼포먼스 PR4)
@@ -244,30 +257,73 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 
 사장 안건: Claude Pro 다운그레이드 + GPT Pro 유지 가정. 모델 vendor 토글 + GPT/Codex 직군 매핑 + 토큰 추적.
 
-**리서치 산출**:
-- ✅ `docs/skills/karpathy-coding-discipline.md` (stable, MIT import) — Andrej Karpathy 4원칙(Think/Simplicity/Surgical/Goal-Driven) PR self-review 체크리스트
-- ✅ `docs/model-routing-plan.md` (draft, 사장 검토 대기) — GPT-5.5/5.4/5.3-Codex/Codex-Spark 카탈로그 (2026-05) + 직군 매핑 표 + 토큰 추적 설계 + 전환 UI 옵션 A/B/C + PR1~6 분해
-- ✅ CLAUDE.md 작업 원칙 8번 신규 — PR self-review 4원칙 참조
+**리서치 산출**: `docs/skills/karpathy-coding-discipline.md` (stable, MIT import) + `docs/model-routing-plan.md` (approved 2026-05-19, 사장 결정 안건 4개 통보 완료).
 
-**핵심 발견**:
-- ChatGPT Pro: GPT-5.5 5x 한도 (Plus 대비) + Codex 10x 한도 (2026-05-31까지 2x boost) + Spark research preview Pro 전용 접근
-- Codex CLI: `@openai/codex` npm — Rust binary subprocess + JSONL stdin/stdout (claude CLI와 동일 패턴 → `core/spawn/` watcher 재사용 가능)
-- 직군 매핑: PM/planner-1 → GPT-5.5, dev-1/dev-arch → GPT-5.3-Codex, qa-1 → GPT-5.4, utility-1 → Spark(preview) + GPT-5.4-mini fallback
+**사장 결정** (model-routing-plan):
+1. GPT 인증 = **OAuth only** (ChatGPT Pro 구독, API key X)
+2. PR 순서 = **순차** (PR1 → PR2 → ...)
+3. 첫 시연 catalog = **`pm-claude-rest-gpt`** (PM Claude + 나머지 GPT)
+4. utility-1 = **Spark + 5.4-mini fallback**
 
-**사장 결정 안건** (4개, `docs/model-routing-plan.md`에 명시):
-1. GPT 인증: OAuth vs API key. 추천 — 둘 다 (OAuth 우선).
-2. PR 진행 순서: PR1/2 → PR3 순차. 추천 — 순차.
-3. 첫 시연 catalog: `pm-claude-rest-gpt` (PM만 Claude).
-4. utility-1 매핑: Spark + 5.4-mini fallback.
+### K. Model Routing PR1~3 + BenchmarkPanel 자동 시연 + 점수 추적 (2026-05-19~21)
 
-### K. 다음 라운드 후보 (사장 결정 안건)
-- **model-routing-plan PR1부터** — vendor 추상화 (`shared/ipc.ts` + `core/employees/*.json` field 추가)
-- **사장 시연** — `docs/benchmark.md` S1~S11 + 분기 사이클(시작/회고/archive) 흐름 검증
-- **karpathy 4원칙 직원 .md 임베드** — 각 sub-agent system prompt에 self-review 4줄 추가 (다음 라운드 후보 from karpathy-coding-discipline.md)
-- **audio 실제 도입** — 사장 audio 패스 결정. 다음 사장 결정 변경 시 PR1~3 도입.
-- **외부 CLI 재개** — Codex/Gemini/Figma 구독 시점에 phase3-plan PR1부터 (본 plan이 phase3 사실상 갱신)
-- **push 일괄 처리** — personal swap 후 78+ commit push
-- **시연 자동화 도구** — benchmark 클릭 한 번 spawn (큰 PR)
+**PR1 vendor 추상화** (`5801d48`):
+- `shared/ipc.ts` Vendor type + EmployeeProfile.vendor field
+- `core/employees/*.json` 6개에 `"vendor": "anthropic"` 추가
+- systemPrompt 무변경 → cache hit 보존
+
+**PR2 catalog preset 시스템** (`428f7c8`):
+- `core/catalogs/` + types/loader/4 JSON preset (`claude-only`/`gpt-only`/`pm-claude-rest-gpt`/`mix-optimal`)
+- override 패턴: 직원 JSON 무변경 + catalog만 vendor/model/effort 덮어씀
+- `workspace/active-catalog.json` 영속
+- CatalogSwitcher UI (EmployeeRoster 하단 dropdown, 각 카드에 직원별 vendor chip)
+- IPC 3채널 (list/active/setActive)
+
+**bug fix** (`c1f33b3` + `304fd4e`):
+- catalogs/quarters handlers projectRoot 4→3단계 ('../../../..' → '../../..'). 다른 main 파일들과 일관성
+- stale `E:/Personal/workspace/quarters/` 데이터 cleanup
+- workspace/quarters + active-catalog.json gitignore
+
+**StatusBar catalog 표시** (`bd3382f`):
+- `model` (마지막 응답 emerald) / `catalog` (활성 sky) / `분기` (amber) 분리
+- 사장 시연 피드백: catalog 변경 즉시 인지 가능
+
+**PR3a vendor 분기 spawn + PM 자동 통지** (`7920e48`):
+- spawn/runner.ts: loadEmployee → manager.getEmployee (catalog override 자동 적용)
+- runSubSession에 vendor 분기 (openai → runCodexSession)
+- catalog setActive 시 PM에 enqueueSystemMessage — vendor 매핑 표 + spawn 패턴 (Task tool vs Write spawn-request)
+- pm.json (5030 → 6006자): Vendor 인지 섹션
+
+**PR3b Codex CLI 실 subprocess** (`34f0d69` + `9fc613d`):
+- stub → `spawn('codex', ['exec', '--json', '--color', 'never', '--skip-git-repo-check', '-s', 'workspace-write', '--dangerously-bypass-approvals-and-sandbox', '-C', root, '-o', lastMsg])`
+- stdin: 직원 systemPrompt + 사장 일감 결합
+- handleCodexLine: type 필드 dispatch (thread.started/turn.started 숨김, error/turn.failed 안내, message/delta/item 추출)
+- 인증 에러 패턴 감지 시 자동 안내 (codex logout → login)
+
+**known issue**: codex 인증 토큰이 single-use refresh — 한 번 만료 후 logout/login 필요. 본인 (claude) Bash 환경에서 직접 호출은 사장 환경의 token cache 접근 X.
+
+**퍼포먼스 PR6 karpathy 임베드** (`1d9a85c`):
+- 직원 5명 .claude/agents/*.md에 PR self-review 4줄 체크리스트 (Think/Simplicity/Surgical/Goal-Driven)
+- 다음 시연에서 결과 품질 ↑ (codex 환각 방지)
+
+**BenchmarkPanel 자동 시연** (`71a6808`):
+- docs/benchmark.md S1~S11 TS 상수 정착
+- EmployeeRoster 하단 "시연 시나리오 →" 버튼 → 모달 → 카드 클릭 → PM 자동 전송
+- 카테고리별 색 (단순/코드/분석/검증/회의/함정/직접답/분기)
+
+**점수 추적** (`4f3f54b`):
+- `core/benchmarks/storage.ts` + IPC 2채널
+- 카드 옆 ✅/△/✗ 토글 + 평가 timestamp
+- `workspace/benchmark-results.json` 영속 (key = scenarioId::catalogId — catalog별 분리)
+- header에 합계 ("5/11 평가됨, ✅ 3 / △ 1 / ✗ 1")
+
+### L. 다음 라운드 후보 (사장 결정 안건)
+- **PR4 vendor별 토큰 추적** — codex JSON 정확 스키마 확인 후 (사장 시연 raw output 필요)
+- **PR5 임계 알림** — quotaUsedRatio ≥ 0.8 시 PM 자동 통지
+- **시연 결과 history 패널** — 점수 누적 history + 시간별 추이 그래프
+- **회의 발언 풍선 추가 정밀화** — 회의 모드에서 실시간 prompt preview
+- **push 일괄 처리** — personal swap 후 88+ commit push
+- **외부 CLI 재개 — Gemini/Figma** — Codex 통합 패턴 확정 후 동일 인프라 적용
 - **Phase 6 비전** — 사장 통보 시
 
 ---
@@ -289,12 +345,12 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 
 1. `README.md` + `CLAUDE.md` + 이 `docs/PROGRESS.md` 읽기. 필요 시 `docs/models.md`, `docs/phase{1,2,3}-plan.md`, `docs/skills/README.md`(시각 영역).
 2. 메모리 자동 로드 (`~/.claude/projects/.../memory/MEMORY.md`).
-3. 마지막 commit `ab9c0c3` 위에서 시작. 워킹트리 clean 확인.
+3. 마지막 commit `4f3f54b` 위에서 시작. 워킹트리 clean 확인.
 4. 사장 다음 지시 대기:
    - **시각 영역 작업** → 해당 `docs/skills/<name>.md` 먼저 읽고 패턴 따름. 없으면 작은 PR 후 사장 검토 → 깊이 필요하면 skill 신규.
    - "Phase 4 더 가자" → 회의 말풍선 / walk cycle / 사장 캐릭터 / 시간 흐름 중 사장 통보.
    - "Codex/Gemini 들어왔어" → `docs/phase3-plan.md` PR1(다중 CLI 백엔드 추상화)부터.
    - "시연 검증 결과" → C 섹션의 시연 시나리오 안내.
-   - "push 가능" → personal GitHub Desktop swap 확인 후 일괄 push (74개).
+   - "push 가능" → personal GitHub Desktop swap 확인 후 일괄 push (88개).
    - "benchmark 시연 결과" → `docs/benchmark.md` 점수 정리 + 회귀 시 시스템 프롬프트 보정.
    - 다른 안건 → 작은 단위로 분해 후 진행.
