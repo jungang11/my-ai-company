@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { EmployeeProfile } from '../../../shared/ipc';
 import type { EmployeeRow } from '../state/employee-store';
 import { CatalogSwitcher } from './CatalogSwitcher';
@@ -18,6 +18,8 @@ type Props = {
   onCatalogChange?: (activeId: string) => void;
 };
 
+const FINISHED_CAP = 4;
+
 export function EmployeeRoster({
   rows,
   profiles,
@@ -33,6 +35,7 @@ export function EmployeeRoster({
   const working = rows.filter((r) => r.status === 'working');
   const finished = rows.filter((r) => r.status !== 'working');
   const activeCount = profiles.filter((p) => p.active).length;
+  const [showAllFinished, setShowAllFinished] = useState(false);
 
   // 직원별 누적 spawn 횟수 + 토큰 합산. PR5 minimal.
   const usageByEmployee = useMemo(() => {
@@ -83,19 +86,36 @@ export function EmployeeRoster({
         )}
       </section>
 
-      <section className="space-y-2">
+      <section className="space-y-1">
         <div className="text-[10px] uppercase tracking-wide text-slate-500">
           최근 종료 ({finished.length})
         </div>
         {finished.length === 0 ? (
           <div className="text-xs text-slate-600">없음</div>
         ) : (
-          finished
-            .slice(-6)
-            .reverse()
-            .map((r) => (
-              <EmployeeCard key={r.sessionId} row={r} onOpen={onOpenSession} compact />
-            ))
+          <>
+            {(showAllFinished ? finished.slice().reverse() : finished.slice(-FINISHED_CAP).reverse()).map(
+              (r) => (
+                <EmployeeCard
+                  key={r.sessionId}
+                  row={r}
+                  onOpen={onOpenSession}
+                  compact
+                />
+              ),
+            )}
+            {finished.length > FINISHED_CAP && (
+              <button
+                type="button"
+                onClick={() => setShowAllFinished((v) => !v)}
+                className="w-full rounded px-1.5 py-1 text-left text-[10px] text-slate-500 hover:bg-slate-800/60 hover:text-slate-300"
+              >
+                {showAllFinished
+                  ? '↑ 최근 4개만 보기'
+                  : `+ ${finished.length - FINISHED_CAP}개 더 보기`}
+              </button>
+            )}
+          </>
         )}
       </section>
 
