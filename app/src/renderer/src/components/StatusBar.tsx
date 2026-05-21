@@ -5,6 +5,8 @@ type Props = {
   status: StatusSnapshot | null;
   quarter: QuarterMeta | null;
   catalogName: string;
+  /** 현 분기 sub-session 누적 cost (App.tsx에서 quarter.sessionIds × roster.metrics 합산) */
+  quarterCost: number;
 };
 
 function formatTokens(n: number): string {
@@ -56,7 +58,7 @@ function shortCatalogName(name: string): string {
   return name.slice(0, 19) + '…';
 }
 
-export function StatusBar({ init, status, quarter, catalogName }: Props) {
+export function StatusBar({ init, status, quarter, catalogName, quarterCost }: Props) {
   // ctx = 마지막 turn에서 PM이 실제 사용한 context window 점유분.
   // = fresh input + cache read (이전 turn 누적이 cache로 hit) + cache creation (새 cache).
   // 1M 한도 대비 몇 % 차지하고 있는지 사장이 한 turn 기준으로 보고 싶어함.
@@ -124,9 +126,13 @@ export function StatusBar({ init, status, quarter, catalogName }: Props) {
             {status ? formatTokens(status.totalCacheCreationTokens) : '0'})
           </span>
         </span>
-        <span>
+        <span title="PM 세션 누적 cost (앱 시작 후)">
           <span className="text-slate-500">cost</span>{' '}
           {status ? formatCost(status.totalCostUsd) : '$0.0000'}
+        </span>
+        <span title="현 분기 sub-session 누적 cost (quarter.sessionIds × roster.metrics)">
+          <span className="text-slate-500">Q</span>{' '}
+          <span className="text-amber-300">{formatCost(quarterCost)}</span>
         </span>
         {(status?.rateLimits ?? []).map((r) => rateLimitChip(r))}
       </span>

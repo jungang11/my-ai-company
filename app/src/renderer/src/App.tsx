@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { BenchmarkMatrix } from './components/BenchmarkMatrix';
 import { BenchmarkPanel } from './components/BenchmarkPanel';
 import { Chat } from './components/Chat';
@@ -193,6 +193,19 @@ export function App() {
     return undefined;
   }
 
+  // 현 분기 누적 cost — quarter.sessionIds와 매핑되는 roster row의 metrics.costUsd 합.
+  const quarterCost = useMemo(() => {
+    if (!currentQuarter) return 0;
+    const set = new Set(currentQuarter.sessionIds);
+    let total = 0;
+    for (const r of roster) {
+      if (set.has(r.sessionId) && r.metrics) {
+        total += r.metrics.costUsd;
+      }
+    }
+    return total;
+  }, [currentQuarter, roster]);
+
   function buildRetrospectiveContext(): string {
     if (!currentQuarter) return '';
     const set = new Set(currentQuarter.sessionIds);
@@ -270,6 +283,7 @@ export function App() {
         status={status}
         quarter={currentQuarter}
         catalogName={activeCatalogName}
+        quarterCost={quarterCost}
       />
       <SubSessionDetail row={selectedRow} onClose={() => setSelectedSessionId(null)} />
       {usageOpen && (
