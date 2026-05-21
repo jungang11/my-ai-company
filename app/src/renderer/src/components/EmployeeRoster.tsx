@@ -13,6 +13,7 @@ type Props = {
   onOpenUsage?: () => void;
   onOpenOffice?: () => void;
   onOpenQuarter?: () => void;
+  onOpenBenchmark?: () => void;
   onCatalogChange?: (activeId: string) => void;
 };
 
@@ -24,6 +25,7 @@ export function EmployeeRoster({
   onOpenUsage,
   onOpenOffice,
   onOpenQuarter,
+  onOpenBenchmark,
   onCatalogChange,
 }: Props) {
   const working = rows.filter((r) => r.status === 'working');
@@ -104,6 +106,15 @@ export function EmployeeRoster({
             className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-300 hover:border-amber-500/60 hover:text-amber-200"
           >
             분기 관리 →
+          </button>
+        )}
+        {onOpenBenchmark && (
+          <button
+            type="button"
+            onClick={onOpenBenchmark}
+            className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-300 hover:border-sky-500/60 hover:text-sky-200"
+          >
+            시연 시나리오 →
           </button>
         )}
         {onOpenOffice && (

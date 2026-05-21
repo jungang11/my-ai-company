@@ -1,4 +1,5 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { BenchmarkPanel } from './components/BenchmarkPanel';
 import { Chat } from './components/Chat';
 import { EmployeeRoster } from './components/EmployeeRoster';
 import { PixelOffice } from './components/PixelOffice';
@@ -76,6 +77,7 @@ export function App() {
   const [usageOpen, setUsageOpen] = useState(false);
   const [officeOpen, setOfficeOpen] = useState(false);
   const [quarterOpen, setQuarterOpen] = useState(false);
+  const [benchmarkOpen, setBenchmarkOpen] = useState(false);
   const [currentQuarter, setCurrentQuarter] = useState<QuarterMeta | null>(null);
   const [activeCatalogName, setActiveCatalogName] = useState<string>('claude-only');
 
@@ -243,6 +245,7 @@ export function App() {
           onOpenUsage={() => setUsageOpen(true)}
           onOpenOffice={() => setOfficeOpen(true)}
           onOpenQuarter={() => setQuarterOpen(true)}
+          onOpenBenchmark={() => setBenchmarkOpen(true)}
           onCatalogChange={() => {
             window.api.fetchEmployees().then(setProfiles).catch(() => {});
             Promise.all([window.api.fetchActiveCatalog(), window.api.listCatalogs()])
@@ -291,6 +294,9 @@ export function App() {
           onStart={(next) => setCurrentQuarter(next)}
           captureRetro={captureLatestRetrospective}
         />
+      )}
+      {benchmarkOpen && (
+        <BenchmarkPanel onClose={() => setBenchmarkOpen(false)} onSend={send} />
       )}
     </main>
   );
