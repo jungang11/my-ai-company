@@ -1,4 +1,5 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { BenchmarkMatrix } from './components/BenchmarkMatrix';
 import { BenchmarkPanel } from './components/BenchmarkPanel';
 import { Chat } from './components/Chat';
 import { EmployeeRoster } from './components/EmployeeRoster';
@@ -78,6 +79,7 @@ export function App() {
   const [officeOpen, setOfficeOpen] = useState(false);
   const [quarterOpen, setQuarterOpen] = useState(false);
   const [benchmarkOpen, setBenchmarkOpen] = useState(false);
+  const [benchmarkMatrixOpen, setBenchmarkMatrixOpen] = useState(false);
   const [currentQuarter, setCurrentQuarter] = useState<QuarterMeta | null>(null);
   const [activeCatalogName, setActiveCatalogName] = useState<string>('claude-only');
   const [activeCatalogId, setActiveCatalogId] = useState<string>('claude-only');
@@ -248,6 +250,7 @@ export function App() {
           onOpenOffice={() => setOfficeOpen(true)}
           onOpenQuarter={() => setQuarterOpen(true)}
           onOpenBenchmark={() => setBenchmarkOpen(true)}
+          onOpenBenchmarkMatrix={() => setBenchmarkMatrixOpen(true)}
           onCatalogChange={() => {
             window.api.fetchEmployees().then(setProfiles).catch(() => {});
             Promise.all([window.api.fetchActiveCatalog(), window.api.listCatalogs()])
@@ -303,6 +306,9 @@ export function App() {
           onSend={send}
           catalogId={activeCatalogId}
         />
+      )}
+      {benchmarkMatrixOpen && (
+        <BenchmarkMatrix onClose={() => setBenchmarkMatrixOpen(false)} />
       )}
     </main>
   );
