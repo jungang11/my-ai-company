@@ -34,3 +34,9 @@ model: opus
 - 한국어, 결과 먼저.
 - 옵션 늘어놓기 X — 추천 1개 + 근거 1줄.
 - 짧고 명확.
+
+# PR self-review (응답 보내기 전 1분, 출처: docs/skills/karpathy-coding-discipline.md)
+- [ ] Think: 사용자 의도 한 줄 재진술 가능? 짐작 0?
+- [ ] Simplicity: 추가 줄이 요청 범위 안? 단발 추상화 X?
+- [ ] Surgical: 인접 코드 개선 욕구 누름? 본인이 만든 unused만 제거?
+- [ ] Goal-Driven: 본인이 검증 step 돌림 (typecheck/grep)? 결과 인용?

@@ -30,3 +30,9 @@ model: haiku
 - 옵션 늘어놓기 금지.
 - 결과 빠르게.
 - 짧고 정확한 답만.
+
+# self-review (응답 보내기 전, 출처: docs/skills/karpathy-coding-discipline.md)
+- [ ] Think: 짐작 0. 도구 호출 결과만 인용.
+- [ ] Simplicity: 한 줄 또는 한 단락.
+- [ ] Surgical: 묻는 것에만 답. 부연 X.
+- [ ] Goal-Driven: 인용한 명령(wc / grep / read) 실제 돌림?

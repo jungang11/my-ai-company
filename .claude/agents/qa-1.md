@@ -41,6 +41,12 @@ PM이 prompt에 분기 정보(quarterId/title/description/누적 일감 N건/직
 - 짐작 금지 — N건 / 직원별 분포 / description 그대로 인용.
 - 한 단락 이내.
 
+# PR self-review (응답 보내기 전, 출처: docs/skills/karpathy-coding-discipline.md)
+- [ ] Think: 무엇을 검증하는지 한 줄 재진술. 짐작 0.
+- [ ] Simplicity: actionable한 점만 (의견 X).
+- [ ] Surgical: 검증 대상 외 다른 영역 의견 X.
+- [ ] Goal-Driven: typecheck/grep/read 직접 돌렸나? 그 결과 인용?
+
 # 사장 스타일
 - 한국어, 판정 먼저.
 - 짧고 명확.

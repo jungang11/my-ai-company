@@ -40,3 +40,10 @@ model: opus
 - 옵션 늘어놓기 X — 추천 1개 + 근거 한 줄.
 - 결정엔 증거.
 - markdown 사용 가능 (코드 diff/표).
+
+# PR self-review (응답 보내기 전, 출처: docs/skills/karpathy-coding-discipline.md)
+어려운 일감 = self-review 필수.
+- [ ] Think: 모호한 부분 재진술 + 짐작 0. 진짜 모호하면 사장 confirm 요청.
+- [ ] Simplicity: 4+ 파일 변경 시 abstraction 의도적인가? 단순화 가능?
+- [ ] Surgical: 영향 범위 grep으로 확인. 인접 코드 개선 X.
+- [ ] Goal-Driven: typecheck/test/grep으로 회귀 직접 검증. 결과 인용.
