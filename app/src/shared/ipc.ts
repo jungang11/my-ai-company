@@ -30,7 +30,8 @@ export type BenchmarkResult = {
 };
 
 export type BenchmarkResults = {
-  results: Record<string, BenchmarkResult>;
+  /** key=scenarioId::catalogId → 평가 history (최근 N개, 가장 최근이 array 끝). */
+  results: Record<string, BenchmarkResult[]>;
 };
 
 export type CatalogOverride = {

@@ -12,11 +12,12 @@ export type BenchmarkResult = {
 };
 
 export type BenchmarkResults = {
-  /** scenarioId + catalogId → 최근 평가만 보존. 히스토리 별도 안건. */
-  results: Record<string, BenchmarkResult>;
+  /** scenarioId::catalogId → 평가 history (최근 N개). */
+  results: Record<string, BenchmarkResult[]>;
 };
 
 const FILE = 'benchmark-results.json';
+const HISTORY_LIMIT = 10;
 
 function workspaceDir(rootDir: string): string {
   const dir = path.join(rootDir, 'workspace');
@@ -28,11 +29,28 @@ function fileKey(scenarioId: string, catalogId: string): string {
   return `${scenarioId}::${catalogId}`;
 }
 
+/** 이전 포맷(single result) → array 자동 migrate. */
+function migrate(raw: unknown): BenchmarkResults {
+  if (!raw || typeof raw !== 'object') return { results: {} };
+  const obj = raw as Record<string, unknown>;
+  const results = obj['results'];
+  if (!results || typeof results !== 'object') return { results: {} };
+  const out: Record<string, BenchmarkResult[]> = {};
+  for (const [k, v] of Object.entries(results as Record<string, unknown>)) {
+    if (Array.isArray(v)) {
+      out[k] = v as BenchmarkResult[];
+    } else if (v && typeof v === 'object') {
+      out[k] = [v as BenchmarkResult];
+    }
+  }
+  return { results: out };
+}
+
 export function loadResults(rootDir: string): BenchmarkResults {
   const file = path.join(workspaceDir(rootDir), FILE);
   if (!existsSync(file)) return { results: {} };
   try {
-    return JSON.parse(readFileSync(file, 'utf8')) as BenchmarkResults;
+    return migrate(JSON.parse(readFileSync(file, 'utf8')));
   } catch {
     return { results: {} };
   }
@@ -41,7 +59,11 @@ export function loadResults(rootDir: string): BenchmarkResults {
 export function saveResult(rootDir: string, result: BenchmarkResult): BenchmarkResults {
   const file = path.join(workspaceDir(rootDir), FILE);
   const data = loadResults(rootDir);
-  data.results[fileKey(result.scenarioId, result.catalogId)] = result;
+  const key = fileKey(result.scenarioId, result.catalogId);
+  const arr = data.results[key] ?? [];
+  arr.push(result);
+  // 최근 HISTORY_LIMIT개만 보존.
+  data.results[key] = arr.slice(-HISTORY_LIMIT);
   writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
   return data;
 }

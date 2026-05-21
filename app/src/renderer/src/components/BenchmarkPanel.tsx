@@ -180,19 +180,29 @@ export function BenchmarkPanel({ onClose, onSend, catalogId }: Props) {
     onClose();
   }
 
-  // 현 catalog 기준 합계.
+  function latestScore(scenarioId: string): BenchmarkResult | undefined {
+    const arr = results.results[resultKey(scenarioId, catalogId)];
+    return arr && arr.length > 0 ? arr[arr.length - 1] : undefined;
+  }
+
+  function history(scenarioId: string): BenchmarkResult[] {
+    return results.results[resultKey(scenarioId, catalogId)] ?? [];
+  }
+
+  // 현 catalog 기준 합계 — 가장 최근 평가만.
   const summary = useMemo(() => {
     let pass = 0;
     let partial = 0;
     let fail = 0;
     let scored = 0;
     for (const s of SCENARIOS) {
-      const r = results.results[resultKey(s.id, catalogId)];
-      if (!r) continue;
+      const arr = results.results[resultKey(s.id, catalogId)];
+      if (!arr || arr.length === 0) continue;
+      const latest = arr[arr.length - 1];
       scored += 1;
-      if (r.score === 'pass') pass += 1;
-      else if (r.score === 'partial') partial += 1;
-      else if (r.score === 'fail') fail += 1;
+      if (latest.score === 'pass') pass += 1;
+      else if (latest.score === 'partial') partial += 1;
+      else if (latest.score === 'fail') fail += 1;
     }
     return { pass, partial, fail, scored, total: SCENARIOS.length };
   }, [results, catalogId]);
@@ -232,7 +242,8 @@ export function BenchmarkPanel({ onClose, onSend, catalogId }: Props) {
         <section className="flex-1 overflow-y-auto px-5 py-4">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {SCENARIOS.map((s) => {
-              const r = results.results[resultKey(s.id, catalogId)];
+              const latest = latestScore(s.id);
+              const hist = history(s.id);
               return (
                 <div
                   key={s.id}
@@ -256,26 +267,52 @@ export function BenchmarkPanel({ onClose, onSend, catalogId }: Props) {
                       <div className="mt-1.5 text-[10px] text-amber-300/80">{s.hint}</div>
                     )}
                   </button>
-                  <div className="mt-2 flex items-center justify-between border-t border-slate-700/40 pt-2">
-                    <div className="flex gap-1">
-                      {(['pass', 'partial', 'fail'] as const).map((sc) => (
-                        <button
-                          key={sc}
-                          type="button"
-                          onClick={() => setScore(s.id, sc)}
-                          className={`rounded px-1.5 py-0.5 text-[10px] ring-1 transition ${
-                            r?.score === sc
-                              ? SCORE_COLOR[sc]
-                              : 'bg-slate-900/40 text-slate-500 ring-slate-700 hover:text-slate-200'
-                          }`}
+                  <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-700/40 pt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        {(['pass', 'partial', 'fail'] as const).map((sc) => (
+                          <button
+                            key={sc}
+                            type="button"
+                            onClick={() => setScore(s.id, sc)}
+                            className={`rounded px-1.5 py-0.5 text-[10px] ring-1 transition ${
+                              latest?.score === sc
+                                ? SCORE_COLOR[sc]
+                                : 'bg-slate-900/40 text-slate-500 ring-slate-700 hover:text-slate-200'
+                            }`}
+                          >
+                            {SCORE_LABEL[sc]}
+                          </button>
+                        ))}
+                      </div>
+                      {hist.length > 0 && (
+                        <div
+                          className="flex items-center gap-0.5"
+                          title={`평가 history (오래된 → 최근, 최대 10개): ${hist
+                            .map((h) => `${SCORE_LABEL[h.score]} ${new Date(h.ts).toLocaleString()}`)
+                            .join(' / ')}`}
                         >
-                          {SCORE_LABEL[sc]}
-                        </button>
-                      ))}
+                          {hist.slice(-5).map((h, i) => (
+                            <span
+                              key={i}
+                              className={`h-2 w-2 rounded-full ${
+                                h.score === 'pass'
+                                  ? 'bg-emerald-500'
+                                  : h.score === 'partial'
+                                  ? 'bg-amber-500'
+                                  : 'bg-rose-500'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {r && (
-                      <span className="text-[9px] text-slate-500" title={new Date(r.ts).toLocaleString()}>
-                        평가됨
+                    {latest && (
+                      <span
+                        className="text-[9px] text-slate-500"
+                        title={new Date(latest.ts).toLocaleString()}
+                      >
+                        {hist.length}회 평가
                       </span>
                     )}
                   </div>
