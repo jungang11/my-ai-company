@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { BenchmarkResult, BenchmarkResults, BenchmarkScore } from '../../../shared/ipc';
 
 // docs/benchmark.md S1~S11 시나리오 — TS 상수로 정착. 분기마다 사장 조정 시 양쪽 동기화.
 type BenchmarkScenario = {
@@ -122,9 +123,26 @@ const CATEGORY_COLOR: Record<BenchmarkScenario['category'], string> = {
 type Props = {
   onClose: () => void;
   onSend: (text: string) => void;
+  catalogId: string; // 점수 기록 시 어느 catalog 기준인지 보존
 };
 
-export function BenchmarkPanel({ onClose, onSend }: Props) {
+const SCORE_LABEL: Record<BenchmarkScore, string> = {
+  pass: '✅',
+  partial: '△',
+  fail: '✗',
+};
+
+const SCORE_COLOR: Record<BenchmarkScore, string> = {
+  pass: 'bg-emerald-700/40 text-emerald-200 ring-emerald-600/60',
+  partial: 'bg-amber-700/40 text-amber-200 ring-amber-600/60',
+  fail: 'bg-rose-700/40 text-rose-200 ring-rose-600/60',
+};
+
+function resultKey(scenarioId: string, catalogId: string): string {
+  return `${scenarioId}::${catalogId}`;
+}
+
+export function BenchmarkPanel({ onClose, onSend, catalogId }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -133,12 +151,51 @@ export function BenchmarkPanel({ onClose, onSend }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const [results, setResults] = useState<BenchmarkResults>({ results: {} });
+
+  useEffect(() => {
+    window.api
+      .fetchBenchmarkResults()
+      .then(setResults)
+      .catch(() => {});
+  }, []);
+
+  async function setScore(scenarioId: string, score: BenchmarkScore) {
+    const result: BenchmarkResult = {
+      scenarioId,
+      score,
+      catalogId,
+      ts: Date.now(),
+    };
+    try {
+      const updated = await window.api.setBenchmarkScore(result);
+      setResults(updated);
+    } catch (e) {
+      console.error('[BenchmarkPanel] setScore failed:', e);
+    }
+  }
+
   function pick(s: BenchmarkScenario) {
-    // 분기 카테고리 일부(S9/S11)는 사장 직접 모달 클릭 필요 — 메시지 보낼 게 아님.
-    // 다만 본 onSend는 채팅 메시지라 분기 카테고리도 일단 보낼 수는 있게 둠 (사장 판단).
     onSend(s.message);
     onClose();
   }
+
+  // 현 catalog 기준 합계.
+  const summary = useMemo(() => {
+    let pass = 0;
+    let partial = 0;
+    let fail = 0;
+    let scored = 0;
+    for (const s of SCENARIOS) {
+      const r = results.results[resultKey(s.id, catalogId)];
+      if (!r) continue;
+      scored += 1;
+      if (r.score === 'pass') pass += 1;
+      else if (r.score === 'partial') partial += 1;
+      else if (r.score === 'fail') fail += 1;
+    }
+    return { pass, partial, fail, scored, total: SCENARIOS.length };
+  }, [results, catalogId]);
 
   return (
     <div
@@ -151,9 +208,16 @@ export function BenchmarkPanel({ onClose, onSend }: Props) {
       >
         <header className="flex items-center justify-between border-b border-slate-800 px-5 py-3">
           <div>
-            <div className="text-sm font-medium text-slate-100">시연 시나리오</div>
+            <div className="text-sm font-medium text-slate-100">
+              시연 시나리오{' '}
+              <span className="text-[10px] text-slate-500">
+                · catalog "{catalogId}" 기준 {summary.scored}/{summary.total} 평가됨
+                {summary.scored > 0 &&
+                  ` (✅ ${summary.pass} / △ ${summary.partial} / ✗ ${summary.fail})`}
+              </span>
+            </div>
             <div className="text-[10px] text-slate-500">
-              docs/benchmark.md S1~S11 — 클릭 한 번에 PM 채팅으로 전송. 평가는 사이드바 카드 + 채팅 응답으로 직접.
+              docs/benchmark.md S1~S11 — 카드 클릭 → PM 전송. ✅/△/✗ 버튼으로 평가 저장 (workspace/benchmark-results.json).
             </div>
           </div>
           <button
@@ -167,26 +231,57 @@ export function BenchmarkPanel({ onClose, onSend }: Props) {
 
         <section className="flex-1 overflow-y-auto px-5 py-4">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {SCENARIOS.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => pick(s)}
-                className={`text-left rounded-lg p-3 ring-1 transition hover:bg-slate-800/60 hover:ring-amber-500/50 ${CATEGORY_COLOR[s.category]}`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-xs font-bold text-slate-100">{s.id}</span>
-                    <span className="text-xs text-slate-200">{s.label}</span>
+            {SCENARIOS.map((s) => {
+              const r = results.results[resultKey(s.id, catalogId)];
+              return (
+                <div
+                  key={s.id}
+                  className={`rounded-lg p-3 ring-1 transition ${CATEGORY_COLOR[s.category]}`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => pick(s)}
+                    className="block w-full text-left hover:opacity-90"
+                    title="클릭 → PM 채팅에 메시지 자동 전송"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs font-bold text-slate-100">{s.id}</span>
+                        <span className="text-xs text-slate-200">{s.label}</span>
+                      </div>
+                      <span className="text-[9px] text-slate-500">→ {s.expected}</span>
+                    </div>
+                    <div className="mt-2 line-clamp-2 text-[11px] text-slate-300">{s.message}</div>
+                    {s.hint && (
+                      <div className="mt-1.5 text-[10px] text-amber-300/80">{s.hint}</div>
+                    )}
+                  </button>
+                  <div className="mt-2 flex items-center justify-between border-t border-slate-700/40 pt-2">
+                    <div className="flex gap-1">
+                      {(['pass', 'partial', 'fail'] as const).map((sc) => (
+                        <button
+                          key={sc}
+                          type="button"
+                          onClick={() => setScore(s.id, sc)}
+                          className={`rounded px-1.5 py-0.5 text-[10px] ring-1 transition ${
+                            r?.score === sc
+                              ? SCORE_COLOR[sc]
+                              : 'bg-slate-900/40 text-slate-500 ring-slate-700 hover:text-slate-200'
+                          }`}
+                        >
+                          {SCORE_LABEL[sc]}
+                        </button>
+                      ))}
+                    </div>
+                    {r && (
+                      <span className="text-[9px] text-slate-500" title={new Date(r.ts).toLocaleString()}>
+                        평가됨
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[9px] text-slate-500">→ {s.expected}</span>
                 </div>
-                <div className="mt-2 line-clamp-2 text-[11px] text-slate-300">{s.message}</div>
-                {s.hint && (
-                  <div className="mt-1.5 text-[10px] text-amber-300/80">{s.hint}</div>
-                )}
-              </button>
-            ))}
+              );
+            })}
           </div>
         </section>
 

@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import {
   IPC,
+  type BenchmarkResult,
+  type BenchmarkResults,
   type Catalog,
   type EmployeeProfile,
   type PMExitPayload,
@@ -55,6 +57,10 @@ const api = {
   fetchActiveCatalog: (): Promise<string> => ipcRenderer.invoke(IPC.catalogsActive),
   setActiveCatalog: (id: string): Promise<string> =>
     ipcRenderer.invoke(IPC.catalogsSetActive, id),
+  fetchBenchmarkResults: (): Promise<BenchmarkResults> =>
+    ipcRenderer.invoke(IPC.benchmarksList),
+  setBenchmarkScore: (result: BenchmarkResult): Promise<BenchmarkResults> =>
+    ipcRenderer.invoke(IPC.benchmarksSetScore, result),
 };
 
 contextBridge.exposeInMainWorld('api', api);

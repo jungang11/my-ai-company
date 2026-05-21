@@ -80,6 +80,7 @@ export function App() {
   const [benchmarkOpen, setBenchmarkOpen] = useState(false);
   const [currentQuarter, setCurrentQuarter] = useState<QuarterMeta | null>(null);
   const [activeCatalogName, setActiveCatalogName] = useState<string>('claude-only');
+  const [activeCatalogId, setActiveCatalogId] = useState<string>('claude-only');
 
   useEffect(() => {
     if (!window.api) {
@@ -104,6 +105,7 @@ export function App() {
       .then(([id, list]) => {
         const found = list.find((c) => c.id === id);
         setActiveCatalogName(found?.name ?? id);
+        setActiveCatalogId(id);
       })
       .catch(() => {});
     // 앱 시작 시 workspace/sessions의 done 마커 있는 과거 세션을 historical 카드로 복원.
@@ -296,7 +298,11 @@ export function App() {
         />
       )}
       {benchmarkOpen && (
-        <BenchmarkPanel onClose={() => setBenchmarkOpen(false)} onSend={send} />
+        <BenchmarkPanel
+          onClose={() => setBenchmarkOpen(false)}
+          onSend={send}
+          catalogId={activeCatalogId}
+        />
       )}
     </main>
   );

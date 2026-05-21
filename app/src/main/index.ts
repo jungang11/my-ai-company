@@ -12,6 +12,7 @@ import {
 } from '../shared/ipc.js';
 import { enqueueSystemMessage, killPM, sendToPM, type PMCallbacks } from './employee/pm-runner.js';
 import { getEmployee, listEmployees, setActive, toPublic } from './employee/manager.js';
+import { wireBenchmarksHandlers } from './benchmarks/handlers.js';
 import { wireCatalogsHandlers } from './catalogs/handlers.js';
 import { recordSessionInQuarter, wireQuartersHandlers } from './quarters/handlers.js';
 import { loadHistoricalSessions, persistSubSession } from './sessions/historical.js';
@@ -250,6 +251,7 @@ app.whenReady().then(() => {
     wireEmployeeRegistry();
     wireQuartersHandlers(pmCallbacks);
     wireCatalogsHandlers(pmCallbacks);
+    wireBenchmarksHandlers();
   });
 
   app.on('activate', () => {
@@ -261,6 +263,7 @@ app.whenReady().then(() => {
         wireEmployeeRegistry();
         wireQuartersHandlers(pmCallbacks);
     wireCatalogsHandlers(pmCallbacks);
+    wireBenchmarksHandlers();
       });
     }
   });

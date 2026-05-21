@@ -15,7 +15,23 @@ export const IPC = {
   catalogsList: 'catalogs:list',
   catalogsActive: 'catalogs:active',
   catalogsSetActive: 'catalogs:setActive',
+  benchmarksList: 'benchmarks:list',
+  benchmarksSetScore: 'benchmarks:setScore',
 } as const;
+
+export type BenchmarkScore = 'pass' | 'partial' | 'fail';
+
+export type BenchmarkResult = {
+  scenarioId: string;
+  score: BenchmarkScore;
+  catalogId: string;
+  ts: number;
+  note?: string;
+};
+
+export type BenchmarkResults = {
+  results: Record<string, BenchmarkResult>;
+};
 
 export type CatalogOverride = {
   vendor?: Vendor;

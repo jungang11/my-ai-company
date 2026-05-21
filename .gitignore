@@ -53,6 +53,7 @@ workspace/cache/
 workspace/spawn-request/
 workspace/quarters/
 workspace/active-catalog.json
+workspace/benchmark-results.json
 *.session.json
 
 # ===== Databases =====
