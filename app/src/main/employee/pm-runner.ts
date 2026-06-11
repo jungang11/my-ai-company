@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { killTree } from '../kill-tree.js';
 import { StatusTracker } from '../status.js';
 import type { StatusSnapshot } from '../../shared/ipc.js';
 import { getEmployee, listEmployees } from './manager.js';
@@ -253,7 +254,7 @@ export function sendToPM(userText: string, cb: PMCallbacks): void {
 
 export function killPM(): void {
   if (activeProc) {
-    activeProc.kill();
+    killTree(activeProc);
     activeProc = null;
   }
 }

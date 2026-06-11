@@ -9,6 +9,7 @@ import {
   type SpawnRequest,
 } from '@core/spawn/protocol';
 import { getEmployee } from '../employee/manager.js';
+import { killTree } from '../kill-tree.js';
 import { StatusTracker } from '../status.js';
 import type { SubSessionMetrics, Vendor } from '../../shared/ipc.js';
 
@@ -466,7 +467,7 @@ function emptyMetrics(): SubSessionMetrics {
 export function killSub(sessionId: string): void {
   const proc = active.get(sessionId);
   if (proc) {
-    proc.kill();
+    killTree(proc);
     active.delete(sessionId);
   }
 }
@@ -474,7 +475,7 @@ export function killSub(sessionId: string): void {
 export function killAllSubs(): void {
   for (const [, proc] of active) {
     try {
-      proc.kill();
+      killTree(proc);
     } catch {
       /* ignore */
     }
