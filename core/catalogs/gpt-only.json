@@ -1,7 +1,9 @@
 {
   "id": "gpt-only",
-  "name": "GPT only",
-  "description": "6명 모두 OpenAI GPT/Codex (ChatGPT Pro 구독 활용, OAuth). Claude 한도 0일 때.",
+  "name": "GPT only (비상용)",
+  "description": "6명 모두 OpenAI GPT/Codex (OAuth). Claude 한도 0일 때 최후 fallback. ChatGPT Pro 한도 전제 — Plus(6/23~)에선 PM 장시간 세션 유지 어려움. Spark는 Pro 전용 preview.",
+  "assumes": ["ChatGPT Pro"],
+  "validUntil": "2026-06-22",
   "overrides": {
     "pm": { "vendor": "openai", "model": "gpt-5.5", "effort": "max" },
     "dev-1": { "vendor": "openai", "model": "gpt-5.3-codex", "effort": "high" },

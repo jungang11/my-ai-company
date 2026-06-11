@@ -1,13 +1,15 @@
 {
   "id": "mix-optimal",
-  "name": "Mix Optimal (사장 조정)",
-  "description": "사장이 분기마다 조정하는 최적 mix. PM + dev-arch는 Claude 정확도, dev-1/qa-1/utility-1은 GPT 비용 효율, planner-1은 외부 리서치라 GPT-5.5 + browse.",
+  "name": "Mix Optimal (주력)",
+  "description": "2026-06-11 개편 주력. Claude Max 5x 주력 + Codex는 QA 단일 직원만 (ChatGPT Plus 한도). PM은 Fable 5 윈도우(~6/22) — 만료 후 claude-opus-4-8로 수정할 것. dev-1/planner-1은 sonnet으로 한도 보호.",
+  "assumes": ["Claude Max 5x", "ChatGPT Plus", "Claude Fable 5 (~2026-06-22)"],
+  "validUntil": "2026-06-22",
   "overrides": {
-    "pm": { "vendor": "anthropic", "model": "claude-opus-4-7", "effort": "xhigh" },
-    "dev-1": { "vendor": "openai", "model": "gpt-5.3-codex", "effort": "high" },
-    "dev-arch": { "vendor": "anthropic", "model": "claude-opus-4-7", "effort": "max" },
-    "planner-1": { "vendor": "openai", "model": "gpt-5.5", "effort": "high" },
-    "qa-1": { "vendor": "openai", "model": "gpt-5.4", "effort": "medium" },
-    "utility-1": { "vendor": "openai", "model": "gpt-5.3-codex-spark", "fallbackModel": "gpt-5.4-mini", "effort": "low" }
+    "pm": { "vendor": "anthropic", "model": "claude-fable-5", "effort": "xhigh" },
+    "dev-1": { "vendor": "anthropic", "model": "claude-sonnet-4-6", "effort": "high" },
+    "dev-arch": { "vendor": "anthropic", "model": "claude-opus-4-8", "effort": "xhigh" },
+    "planner-1": { "vendor": "anthropic", "model": "claude-sonnet-4-6", "effort": "high" },
+    "qa-1": { "vendor": "openai", "model": "gpt-5.3-codex", "effort": "medium" },
+    "utility-1": { "vendor": "anthropic", "model": "claude-haiku-4-5-20251001", "effort": "low" }
   }
 }

@@ -4,9 +4,9 @@
   "role": "개발자",
   "cliBackend": "claude-code",
   "vendor": "anthropic",
-  "model": "claude-opus-4-6",
-  "effort": "xhigh",
-  "shortDescription": "일상 기능 구현·리팩토링·일반 코드 작성. Opus 4.6 SWE-bench 80.8%. 어려운 아키텍처/race condition/security는 dev-arch에 넘길 것.",
+  "model": "claude-sonnet-4-6",
+  "effort": "high",
+  "shortDescription": "일상 기능 구현·리팩토링·일반 코드 작성. Sonnet 4.6 (SWE-bench 79.6%, Opus 4.6와 거의 동등) — Max 5x 한도 보호 하향. 어려운 아키텍처/race condition/security는 dev-arch에 넘길 것.",
   "systemPrompt": "너는 payroll-os의 개발자 직원이다. PM이 spawn-request로 넘긴 일감을 받아서 코드를 작성/수정한다.\n\n원칙:\n- 결과 먼저, 한국어로 짧게 보고\n- 시도한 명령/파일 경로/변경 요약을 1~3문장에 압축\n- 모르면 짐작하지 말고 \"PM에게 추가 정보 필요\"라고 명시\n- 변경 후엔 npm test / typecheck 가능하면 돌리고 결과 보고",
   "active": true
 }

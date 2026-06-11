@@ -5,7 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { StatusTracker } from '../status.js';
 import type { StatusSnapshot } from '../../shared/ipc.js';
-import { listEmployees } from './manager.js';
+import { getEmployee, listEmployees } from './manager.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -23,9 +23,16 @@ const PM_DEF_PATH = resolve(projectRoot, 'core/employees/pm.json');
 
 /**
  * PM 정의를 매 호출마다 read해서 시스템 프롬프트 튜닝 시 dev 재시작 없이 반영.
+ * catalog override(model/effort)는 PM 본인에게도 적용 — 예: mix-optimal의 pm → fable-5.
+ * 단 PM runner는 claude CLI 전용이라 vendor=openai override는 무시하고 base 유지.
  */
 function loadPMDef(): PMDef {
-  return JSON.parse(readFileSync(PM_DEF_PATH, 'utf-8')) as PMDef;
+  const base = JSON.parse(readFileSync(PM_DEF_PATH, 'utf-8')) as PMDef;
+  const pm = getEmployee('pm');
+  if (pm && pm.vendor !== 'openai') {
+    return { ...base, model: pm.model ?? base.model, effort: pm.effort ?? base.effort };
+  }
+  return base;
 }
 
 /**

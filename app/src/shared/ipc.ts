@@ -45,6 +45,10 @@ export type Catalog = {
   id: string;
   name: string;
   description: string;
+  /** preset이 전제하는 구독 (예: "Claude Max 5x"). */
+  assumes?: string[];
+  /** 전제 만료일 (YYYY-MM-DD). 지나면 stale 표시. */
+  validUntil?: string;
   overrides: Record<string, CatalogOverride>;
 };
 
