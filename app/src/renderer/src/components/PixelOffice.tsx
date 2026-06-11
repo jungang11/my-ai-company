@@ -2,10 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { EmployeeProfile, QuarterMeta } from '../../../shared/ipc';
 import type { EmployeeRow } from '../state/employee-store';
 import { MessageInput } from './MessageInput';
-import { DeskSprite, WorkerAtSeat } from './pixel-office/Desk';
-import { Floor } from './pixel-office/Floor';
-import { MeetingTable } from './pixel-office/MeetingTable';
-import { Sofa } from './pixel-office/Sofa';
+import { WorkerAtSeat } from './pixel-office/Desk';
 import {
   fromHour,
   TIME_CYCLE,
@@ -13,11 +10,9 @@ import {
   timeOfDayLabel,
   type TimeOfDay,
 } from './pixel-office/TimeOverlay';
-import { Walls } from './pixel-office/Walls';
-import { WaterCooler } from './pixel-office/WaterCooler';
 import { Whiteboard } from './pixel-office/Whiteboard';
-import { Zones } from './pixel-office/Zones';
 import type { Role } from './pixel-office/palette';
+import officeBg from '../assets/pixel-office/office-bg.png';
 
 type Props = {
   pmPending: boolean;
@@ -40,14 +35,16 @@ type Seat = {
   meetingY: number;
 };
 
-// 회의 테이블 중심 x=82, y=30. 둘레 6명 — PM이 top center에서 주재.
+// gpt-image-2 isometric 배경(office-bg.png, 3:2) 기준 % anchor.
+// PM=상단 단독 책상, 직원 5명=대각 2열 (6번째 책상은 공석 — 신규 직원 슬롯).
+// 회의 테이블 중심 ≈ (74,41). 둘레 6명 — PM이 top center에서 주재.
 const SEATS: readonly Seat[] = [
-  { employeeId: 'dev-1',     name: '김개발', role: 'Engineer',  x: 18, y: 32, meetingX: 74, meetingY: 22 },
-  { employeeId: 'pm',        name: '박PM',   role: 'PM',        x: 40, y: 32, meetingX: 82, meetingY: 17 },
-  { employeeId: 'dev-arch',  name: '박아키', role: 'Architect', x: 62, y: 32, meetingX: 90, meetingY: 22 },
-  { employeeId: 'planner-1', name: '이기획', role: 'Planner',   x: 18, y: 72, meetingX: 74, meetingY: 38 },
-  { employeeId: 'utility-1', name: '막내',   role: 'Utility',   x: 40, y: 72, meetingX: 82, meetingY: 43 },
-  { employeeId: 'qa-1',      name: '정검증', role: 'QA',        x: 62, y: 72, meetingX: 90, meetingY: 38 },
+  { employeeId: 'pm',        name: '박PM',   role: 'PM',        x: 56, y: 20, meetingX: 74, meetingY: 32 },
+  { employeeId: 'dev-1',     name: '김개발', role: 'Engineer',  x: 25, y: 38, meetingX: 66, meetingY: 36 },
+  { employeeId: 'dev-arch',  name: '박아키', role: 'Architect', x: 35, y: 44, meetingX: 82, meetingY: 36 },
+  { employeeId: 'planner-1', name: '이기획', role: 'Planner',   x: 45, y: 50, meetingX: 66, meetingY: 46 },
+  { employeeId: 'qa-1',      name: '정검증', role: 'QA',        x: 17, y: 53, meetingX: 82, meetingY: 46 },
+  { employeeId: 'utility-1', name: '막내',   role: 'Utility',   x: 27, y: 59, meetingX: 74, meetingY: 50 },
 ];
 
 export function PixelOffice({
@@ -161,7 +158,7 @@ export function PixelOffice({
             <div>
               <div className="text-sm font-medium text-slate-100">사무실</div>
               <div className="text-[10px] text-slate-500">
-                Phase 4 PR2.4 — 회의 모드 (caps prefix 시 직원 회의 테이블 이동) · 작업 중 {workingCount}명
+                isometric bg (gpt-image-2) · 회의: prefix 시 회의 테이블 집합 · 작업 중 {workingCount}명
               </div>
             </div>
             {meetingMode && (
@@ -204,24 +201,28 @@ export function PixelOffice({
           </div>
         </header>
         <section className="flex-1 overflow-hidden p-4">
-          <div className="relative h-full w-full overflow-hidden rounded-lg ring-2 ring-amber-950 shadow-2xl">
-            <Floor />
-            <Walls />
-            <Zones meetingMode={meetingMode} retroMode={retroMode} />
-            <Whiteboard x={82} y={14} quarter={quarter} />
-            <MeetingTable x={82} y={30} />
-            <WaterCooler x={75} y={66} />
-            <Sofa x={84} y={76} />
-
-            {/* 책상 sprite — 회의 모드여도 자리 유지 (빈 의자) */}
-            {SEATS.map((seat) => (
-              <DeskSprite
-                key={`desk-${seat.employeeId}`}
-                x={seat.x}
-                y={seat.y}
-                working={!meetingMode && !!workingMap[seat.employeeId]}
+          {/* 배경이 3:2(1536x1024)라 aspect 고정 — % anchor가 이미지 위 동일 지점에 정착 */}
+          <div
+            className="relative mx-auto h-full max-w-full overflow-hidden rounded-lg ring-2 ring-amber-950 shadow-2xl"
+            style={{ aspectRatio: '3 / 2' }}
+          >
+            {/* isometric 사무실 배경 (gpt-image-2, 레퍼런스: references/kairosoftgame_image.jpg).
+                바닥/벽/책상/회의테이블/휴게존은 배경에 흡수 — 이전 SVG 컴포넌트는 보존(롤백용). */}
+            <img
+              src={officeBg}
+              alt=""
+              className="pointer-events-none absolute inset-0 h-full w-full"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            {/* 회의/회고 모드 cue — 배경 위 테두리 glow (Zones 사각형은 iso와 안 맞아 회수) */}
+            {meetingMode && (
+              <div
+                className={`pointer-events-none absolute inset-0 rounded-lg ring-4 ring-inset ${
+                  retroMode ? 'ring-rose-500/40' : 'ring-emerald-500/40'
+                }`}
               />
-            ))}
+            )}
+            <Whiteboard x={36} y={10} quarter={quarter} />
 
             {/* 캐릭터 — 회의 모드 시 회의 테이블 둘레로 transition */}
             {SEATS.map((seat) => {
@@ -250,10 +251,10 @@ export function PixelOffice({
               );
             })}
 
-            {/* 사장 캐릭터 — 입구 옆 default. 회의 모드 시 회의실 zone 바로 아래(입구쪽)에 서서 PM과 대면 — 회의 테이블 둘레 6명 자리 안 침범. */}
+            {/* 사장 캐릭터 — 입구(좌하단 문) 옆 default. 회의 모드 시 테이블 아래쪽에서 PM과 대면 — 둘레 6명 자리 안 침범. */}
             <WorkerAtSeat
-              x={meetingMode ? 82 : 88}
-              y={meetingMode ? 50 : 50}
+              x={meetingMode ? 74 : 12}
+              y={meetingMode ? 58 : 70}
               role="Boss"
               name="사장"
               working={false}
