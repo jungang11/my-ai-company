@@ -483,12 +483,17 @@ Pixel art game asset for a cozy office-management sim (Kairosoft-like tone).
 [ATTACH: current office screenshot as style/palette reference]
 
 Subject: {대상 한 줄 — 아래 대상 리스트}
-View: 3/4 top-down (slightly angled bird's-eye), single object, centered.
+View (critical): Kairosoft-style flat 3/4 FRONT view (like "Game Dev Story" furniture) —
+camera straight at the object from the front and slightly above, object faces the viewer,
+axis-aligned (horizontal edges stay horizontal), front face + sliver of flat top visible.
+STRICTLY NO isometric projection, NO 45-degree rotation, NO diagonal angle, NO vanishing point.
+Background (critical): PNG with TRUE TRANSPARENT ALPHA CHANNEL — not white, not gray,
+not a checkerboard pattern. The object floats on nothing.
 Canvas: 1024x1024, object drawn as if on a {64|96}px pixel grid (large visible square pixels, strictly on-grid).
 Palette: max 16 colors, warm and soft, match the attached reference screenshot.
-Light: from top-left, soft single shadow below object only.
-Background: fully transparent (alpha). No floor, no scene, no other props.
+Light: from top-left, thin flat shadow strip directly under the object only.
 Strictly NO: anti-aliasing, gradients, blur, outline glow, text, watermark, off-grid pixels, photorealism.
+Generate once, save immediately. Do NOT verify with scripts, do NOT open/analyze saved files, do NOT iterate.
 ```
 
 ### 대상 리스트 — 우선 5종 (사장 생성 → `assets/pixel-office/`에 저장)
