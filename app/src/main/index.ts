@@ -18,6 +18,7 @@ import { recordSessionInQuarter, wireQuartersHandlers } from './quarters/handler
 import { loadHistoricalSessions, persistSubSession } from './sessions/historical.js';
 import { killAllSubs } from './spawn/runner.js';
 import { startSpawnWatcher, stopSpawnWatcher } from './spawn/watcher.js';
+import { detectQuotaAlert } from './quota-alert.js';
 import { getStatusInit } from './status.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -47,6 +48,9 @@ const pmCallbacks: PMCallbacks = {
     mainWindow.webContents.send(IPC.pmExit, payload);
   },
   onStatus: (snapshot) => {
+    // PR5 한도 임계 알림 — status 전이(allowed_warning 등) 감지 시 PM에 1회 통지.
+    const alert = detectQuotaAlert(snapshot);
+    if (alert) enqueueSystemMessage(alert, pmCallbacks);
     if (!mainWindow) return;
     const payload: StatusSnapshot = snapshot;
     mainWindow.webContents.send(IPC.statusUpdate, payload);
