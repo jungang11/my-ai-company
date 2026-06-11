@@ -9,7 +9,14 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json"
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "pack:dir": "electron-vite build && electron-builder --dir",
+    "pack:win": "electron-vite build && electron-builder --win"
+  },
+  "overrides": {
+    "app-builder-lib": {
+      "@noble/hashes": "^1.8.0"
+    }
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
@@ -18,6 +25,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^33.2.0",
+    "electron-builder": "^26.15.2",
     "electron-vite": "^2.3.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.2",

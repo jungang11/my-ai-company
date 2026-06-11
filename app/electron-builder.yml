@@ -1,0 +1,28 @@
+# 패키징 spike (2026-06-11) — 목적: node-pty 네이티브 모듈이 패키지에서 로드되는지 검증.
+# NSIS 인스톨러/자동 시작은 spike 통과 후 별도 PR.
+appId: dev.payrollos.app
+productName: payroll-os
+directories:
+  output: dist-builder
+
+files:
+  - out/**
+  - package.json
+
+# prebuilt-multiarch는 Electron ABI prebuild 동봉 — 소스 rebuild(node-gyp/VS Build Tools) 불필요.
+# true(기본)면 toolchain 없는 머신에서 빌드 실패 위험.
+npmRebuild: false
+
+# 네이티브 .node 바이너리는 asar 안에서 로드 불가 — unpack 필수.
+asarUnpack:
+  - "**/node_modules/@homebridge/node-pty-prebuilt-multiarch/**"
+
+win:
+  target:
+    - nsis
+  # 코드 서명 없음 (개인용) — SmartScreen 경고는 감수.
+
+nsis:
+  oneClick: true
+  perMachine: false
+  deleteAppDataOnUninstall: false

@@ -25,6 +25,7 @@ release/
 src-tauri/target/
 src-tauri/gen/
 app/dist/
+app/dist-builder/
 
 # ===== Logs =====
 logs/
@@ -77,6 +78,7 @@ data/
 .claude/sessions/
 .codex/cache/
 .gemini/cache/
+.omc/
 
 # ===== OS =====
 .DS_Store
