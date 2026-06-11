@@ -348,10 +348,11 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 - ✅ **비밀정보 위생** (`c19f565`) — 히스토리 전수 스캔: 토큰 패턴(sk-ant/ghp_/Bearer 등) 0건, .env/settings.local.json 커밋 이력 없음. 유일 노출은 c1f33b3의 `workspace/quarters/current.json`(분기 메타뿐, 무해 — rewrite 불필요). gitignore를 `workspace/*` + `!workspace/board.md` deny-all로 전환 + `app/dist-builder/` + `.omc/` 추가. 공개 시 commit author personal email(naver) 노출은 의도된 identity로 판단.
 
 ### N. 다음 라운드 후보 (사장 결정 안건)
-- **6/23 전환 작업** — mix-optimal PM을 `claude-opus-4-8`로 수정 (stale 배지가 6/23부터 자동 표시됨) + fable-5 vs opus-4-8 benchmark 비교.
+- **6/23 전환 작업** — mix-optimal에서 PM을 `claude-opus-4-8`로, **qa-1을 `gpt-5.3-codex`(Plus)로** 수정 (stale 배지가 6/23부터 자동 표시됨) + fable-5 vs opus-4-8 benchmark 비교. (qa-1은 Pro 주간 한정 `gpt-5.5`로 운용 중 — 2026-06-11 사장 지시)
+- **프로젝트 경로 인식 ("출근 경로")** — 사장 비전 (2026-06-11): 터미널처럼 앱이 임의 프로젝트 폴더를 골라 PM/직원을 그 cwd로 spawn → 프로젝트별 CLAUDE.md/AGENTS.md 지침 자동 적용. StatusBar에 경로/프로젝트 표시 (codex statusline처럼). **packaged 리소스 전략 PR과 본체가 동일** (projectRoot=앱 리소스 vs workDir=작업 대상 분리)이라 묶어 진행 추천.
 - **packaged 리소스 전략 PR** — extraResources(core/.claude) + workspace→userData 이전 + NSIS 인스톨러 + `app.setLoginItemSettings` 부팅 자동 시작. spike에서 경로 문제 확인됨.
 - **worktree 격리 도입 검토** — landscape 결론 1순위 기술 부채.
-- **PR4 vendor별 토큰 추적** — PR5 거친 알림 가동 후. codex JSON 스키마 확인 필요.
+- **PR4 vendor별 토큰 추적 + StatusBar vendor 2줄** — 사장 비전 (2026-06-11): 하단바에 Claude/GPT 각각 구독 플랜·세션 토큰·5h/7d 사용량·리셋 날짜. Claude 쪽 7d는 rate_limit_event 파싱 확장으로 즉시 가능, GPT 쪽은 codex JSONL의 token/rate limit 이벤트 스키마 확인 필요 (사장 시연 raw output 의존). 플랜 이름은 catalog assumes 연동.
 - **분기 archive export/import** — 두 PC 장부 분리(동기화 안 함) 보완용 단방향 이동.
 - **오픈소스 준비 잔여** — README 영문 병기 구조 + 스크린샷/GIF 슬롯 + LICENSE(MIT) + NOTICE.
 - **외부 CLI 재개 — Gemini/Figma** — Codex 통합 패턴 재사용.
