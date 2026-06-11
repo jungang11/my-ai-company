@@ -47,14 +47,10 @@ secrets/
 .api-keys
 
 # ===== Worker / Employee workspaces (runtime data) =====
-# 직원들이 실제로 작업하는 폴더는 로컬에서만 보관
-workspace/runtime/
-workspace/sessions/
-workspace/cache/
-workspace/spawn-request/
-workspace/quarters/
-workspace/active-catalog.json
-workspace/benchmark-results.json
+# 직원 런타임 산출물은 전부 로컬 only — deny-all + 예외 방식.
+# (개별 enumerate는 새 런타임 파일 추가 시 누락 위험 — 2026-06-11 위생 라운드에서 전환)
+workspace/*
+!workspace/board.md
 *.session.json
 
 # ===== Databases =====
