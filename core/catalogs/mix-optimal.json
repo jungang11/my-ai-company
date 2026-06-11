@@ -1,15 +1,15 @@
 {
   "id": "mix-optimal",
   "name": "Mix Optimal (주력)",
-  "description": "2026-06-11 개편 주력. Claude Max 5x 주력 + Codex는 QA 단일 직원만 (ChatGPT Plus 한도). PM은 Fable 5 윈도우(~6/22) — 만료 후 claude-opus-4-8로 수정할 것. dev-1/planner-1은 sonnet으로 한도 보호.",
-  "assumes": ["Claude Max 5x", "ChatGPT Plus", "Claude Fable 5 (~2026-06-22)"],
+  "description": "2026-06-11 개편 주력. Claude Max 5x 주력 + Codex는 QA 단일 직원만. PM=Fable 5, qa-1=GPT-5.5는 둘 다 ~6/22 윈도우 (Pro 주간) — 만료 후 PM은 claude-opus-4-8, qa-1은 gpt-5.3-codex(Plus)로 수정할 것. dev-1/planner-1은 sonnet으로 한도 보호.",
+  "assumes": ["Claude Max 5x", "ChatGPT Pro (~6/22, 이후 Plus)", "Claude Fable 5 (~2026-06-22)"],
   "validUntil": "2026-06-22",
   "overrides": {
     "pm": { "vendor": "anthropic", "model": "claude-fable-5", "effort": "xhigh" },
     "dev-1": { "vendor": "anthropic", "model": "claude-sonnet-4-6", "effort": "high" },
     "dev-arch": { "vendor": "anthropic", "model": "claude-opus-4-8", "effort": "xhigh" },
     "planner-1": { "vendor": "anthropic", "model": "claude-sonnet-4-6", "effort": "high" },
-    "qa-1": { "vendor": "openai", "model": "gpt-5.3-codex", "effort": "medium" },
+    "qa-1": { "vendor": "openai", "model": "gpt-5.5", "fallbackModel": "gpt-5.3-codex", "effort": "high" },
     "utility-1": { "vendor": "anthropic", "model": "claude-haiku-4-5-20251001", "effort": "low" }
   }
 }

@@ -57,8 +57,10 @@ const components = {
 };
 
 export function Markdown({ children }: { children: string }) {
+  // singleTilde: false — GFM 기본(single ~)은 "PR1~14 ... PR1~3" 같은 범위 표기를
+  // strikethrough로 먹어버림 (사장 시연에서 "PR114"로 보인 버그). ~~만 strikethrough.
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components as any}>
+    <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]} components={components as any}>
       {children}
     </ReactMarkdown>
   );
