@@ -1,5 +1,10 @@
 # 모델 카탈로그 (적재적소 매핑)
 
+> ⚠️ **2026-06-11 구독 역전**: 아래 직군 매핑 표(섹션 4)는 2026-05-18 기준 — **현행 ground truth는
+> `core/catalogs/mix-optimal.json`** (PM=`claude-fable-5` ~6/22 → 이후 `claude-opus-4-8`,
+> dev-1/planner-1=sonnet 한도 보호 하향, qa-1=Codex 단일(ChatGPT Plus), utility=haiku).
+> 배경/근거는 `docs/PROGRESS.md` 상단 "구독 상황" + 섹션 M.
+>
 > 사장이 직원 JSON의 `model`/`effort` 필드를 채울 때 참고하는 single source of truth.
 > 외부 가격/스펙/벤치마크는 변동하므로 이 문서가 ground truth — 직원 JSON을 여기 기준으로 튜닝.
 >

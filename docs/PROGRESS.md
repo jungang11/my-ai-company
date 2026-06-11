@@ -1,19 +1,38 @@
 # 진행 현황 (세션 인수인계)
 
 > 새 세션에서 이 파일을 처음 읽고 바로 작업 이어갈 수 있도록 한 페이지로 정리한 진행표.
-> 갱신 시점: 2026-05-21 — Model Routing PR1~3 통과 (vendor 추상화 / catalog preset / Codex 실 spawn) + karpathy 임베드 + BenchmarkPanel 자동 시연 + 점수 추적.
+> 갱신 시점: 2026-06-11 — **구독 역전 라운드** (섹션 M): 인건비표 개편 + PR5 한도 알림 + landscape.md + 패키징 spike + Fable 5 벤치 준비 + 비밀정보 위생.
+
+## ⚠️ 구독 상황 (2026-06-11 확정 — 기존 가정 폐기)
+
+- **Claude Max 5x ($100) 결제.** ~6/22까지 **Claude Fable 5** 사용 가능 (이후 일반 구독 제외, usage credit 종량제 전환, 복귀 미정). 6/23부터 주력 = **Opus 4.8**.
+- **ChatGPT: 6/22까지 Pro → 6/23부터 Plus($20).** Codex 한도 축소 — 다발 spawn 불가, **qa-1 단일 직원**으로만 운용.
+- **~6/22 = Fable 5 윈도우**: payroll-os 진척 + BenchmarkPanel에 fable-5 기준점 데이터 남기기 (6/23 이후 opus-4-8 회귀 보정의 비교 기준).
+- 옛 가정("Claude 다운그레이드 + GPT Pro 유지")에 기반한 결정들 — model-routing-plan 사장 결정 3(`pm-claude-rest-gpt` 첫 시연)·4(utility=Spark), models.md 직군 매핑 표 — 는 **폐기/강등**. 현행 ground truth는 `core/catalogs/mix-optimal.json`.
 
 ---
 
 ## 한 줄 요약
 
-**Phase 1~5 full + 퍼포먼스 PR1~6 + audio/karpathy skills + model-routing PR1~3 + BenchmarkPanel 자동 시연 + 점수 추적**. 사장 본인 AI 구독을 "직원"으로 추상화한 회사 메타포. Claude/GPT vendor 토글(`pm-claude-rest-gpt`/`gpt-only`/`claude-only`/`mix-optimal` 4 catalog) + Codex CLI 실 subprocess + sub-agent별 검증 강화. 시연: 좌측 사이드바 catalog dropdown + "시연 시나리오 →" 모달 클릭 한 번에 spawn + ✅/△/✗ 평가 영속화. codex 인증 token single-use 이슈 — 매 logout/login 필요할 수 있음.
+**Phase 1~5 full + model-routing PR1~3·PR5(한도 알림) + BenchmarkPanel(채점 시 PM 모델 자동 기록) + 인건비표 개편 + landscape.md + electron-builder spike 통과**. 주력 catalog = 수정판 `mix-optimal`: PM=`claude-fable-5`(~6/22, 이후 opus-4-8로 수정 필요), dev-1/planner-1=sonnet(한도 보호), qa-1=codex(openai 단일), dev-arch=opus-4-8, utility=haiku. catalog에 `assumes`/`validUntil` 메타데이터 + CatalogSwitcher stale 배지. `pm-claude-rest-gpt`/`gpt-only`는 ChatGPT Pro 전제라 비상용 강등. codex 인증 token single-use 이슈 — 매 logout/login 필요할 수 있음.
 
 ---
 
-## 누적 commit (push 가능 단위, origin 보다 88 ahead)
+## 누적 commit (origin은 `1435932`까지 push 완료 — 88개 적체 해소 확인 2026-06-11. 이번 라운드만 ahead)
 
 ```
+c19f565 chore: workspace gitignore를 deny-all + board.md 예외로 전환 (위생 라운드)
+bbda5f7 core+app: benchmark 채점에 PM 모델 자동 기록 — Fable 5 기준점 준비
+783c8c5 app+chore: electron-builder 패키징 spike — node-pty unpack 검증 통과
+8d35c62 docs: landscape.md — 유사 오케스트레이터 8종 조사 + 공개 포지셔닝
+e69ad48 app: model-routing PR5 — Claude 한도 임계 알림 (거친 휴리스틱)
+133a0b7 core+app: 인건비표 개편 — Fable 5 윈도우 + ChatGPT Plus 다운그레이드 반영
+─── 여기까지 2026-06-11 라운드 (미push) / 아래는 push 완료 ───
+1435932 app: StatusBar 현 분기 cost 추가 (Q $X.XXXX amber)
+3f34011 app: 종료 카드 1줄 압축 + 4개 cap + 더보기 토글 (사장 폴리시)
+6cb2712 app: BenchmarkMatrix — catalog × scenario history grid 모달
+55cdc78 app: 직원 명부 카드에 vendor chip 추가 (C/G 1글자 + tooltip)
+60ea3c1 core+app: BenchmarkPanel history — 점수 누적 + 시간별 추이 (최근 10개)
 4f3f54b core+app: BenchmarkPanel 점수 추적 (✅/△/✗ + 영속 + catalog별)
 71a6808 app: BenchmarkPanel 모달 — 시연 시나리오 11개 클릭 spawn
 1d9a85c core: karpathy 4원칙 PR self-review 직원 5명 .md 임베드 (퍼포먼스 PR6)
@@ -317,14 +336,26 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 - `workspace/benchmark-results.json` 영속 (key = scenarioId::catalogId — catalog별 분리)
 - header에 합계 ("5/11 평가됨, ✅ 3 / △ 1 / ✗ 1")
 
-### L. 다음 라운드 후보 (사장 결정 안건)
-- **PR4 vendor별 토큰 추적** — codex JSON 정확 스키마 확인 후 (사장 시연 raw output 필요)
-- **PR5 임계 알림** — quotaUsedRatio ≥ 0.8 시 PM 자동 통지
-- **시연 결과 history 패널** — 점수 누적 history + 시간별 추이 그래프
-- **회의 발언 풍선 추가 정밀화** — 회의 모드에서 실시간 prompt preview
-- **push 일괄 처리** — personal swap 후 88+ commit push
-- **외부 CLI 재개 — Gemini/Figma** — Codex 통합 패턴 확정 후 동일 인프라 적용
-- **Phase 6 비전** — 사장 통보 시
+### M. 구독 역전 라운드 (2026-06-11, 사장 브리핑 일괄 지시)
+
+상단 "구독 상황" 참조. 8단계 지시 전부 완료:
+
+- ✅ **인건비표 개편** (`133a0b7`) — 직원 JSON(dev-1/planner-1 sonnet, pm 기본 opus-4-8) + `.claude/agents` frontmatter(dev-1/planner-1 → sonnet) + catalog 4종 개편. **mix-optimal이 주력** (PM=fable-5 ~6/22 / qa-1=codex 단일). `pm-claude-rest-gpt`·`gpt-only` 비상용 강등. Catalog 타입에 `assumes`/`validUntil` + `isCatalogStale()` + CatalogSwitcher stale 배지 + `core/catalogs/presets.test.ts`. **pm-runner가 catalog override를 PM 본인에게도 적용**하게 수정 (이전엔 pm.json 직접 read라 pm override가 장식이었음 — vendor=openai override는 claude CLI 전용이라 가드).
+- ✅ **PR5 한도 임계 알림** (`e69ad48`) — `app/src/main/quota-alert.ts`. 정확한 사용률(%)이 stream-json에 없어 rate_limit_event **status 전이(allowed_warning/limited)** 를 80% 임계 대용으로 사용. (type, status, reset 윈도우)당 1회 dedupe → PM enqueueSystemMessage. PR4(정밀 추적)는 후순위로 역전.
+- ✅ **landscape 리서치** (`8d35c62`) — `docs/landscape.md`. OMC/OMX/OMH/Conductor/Vibe Kanban/Claude Squad/Multiclaude/Gas Town + 공식 Agent Teams. 결론: Conductor 자리(구독 BYO + GUI)가 Windows 공석 + 공식 Agent Teams는 tmux 전제로 Windows 락아웃 → 우리 포지션 유효. **worktree 격리만 전 경쟁자 표준인데 우리 결여** (도입 검토 1순위).
+- ✅ **패키징 spike** (`783c8c5`) — electron-builder `--dir` 통과 + win-unpacked 부팅 7초 smoke OK. 발견: ① prebuilt-multiarch가 Electron ABI 바이너리 동봉이라 **@electron/rebuild 불필요** (`npmRebuild: false` + asarUnpack으로 충분 — 예상한 최대 난관이 무난). ② electron-builder 26.x의 @noble/hashes v2 ESM 충돌 → package.json overrides로 v1 고정. ③ **진짜 난관은 리소스 경로**: packaged 앱의 projectRoot(`../../..`)가 resources/를 가리켜 core/employees·.claude/agents·workspace 접근 불가 → extraResources + userData 이전 전략 별도 PR 필요. ④ 현재 app/src는 node-pty 미사용 (Phase 1 유산은 core/pty에만 — PM은 child_process).
+- ✅ **benchmark Fable 5 준비** (`bbda5f7`) — BenchmarkResult에 `model` 자동 기록 (실측 snapshot 우선) + history tooltip 표기. `claude --model claude-fable-5` ping 검증 OK. 활성 catalog를 mix-optimal로 사전 설정 완료 — **사장이 `npm run dev` 후 BenchmarkPanel에서 S1~S11 돌리면 fable-5 기준점 적재됨**.
+- ✅ **비밀정보 위생** (`c19f565`) — 히스토리 전수 스캔: 토큰 패턴(sk-ant/ghp_/Bearer 등) 0건, .env/settings.local.json 커밋 이력 없음. 유일 노출은 c1f33b3의 `workspace/quarters/current.json`(분기 메타뿐, 무해 — rewrite 불필요). gitignore를 `workspace/*` + `!workspace/board.md` deny-all로 전환 + `app/dist-builder/` + `.omc/` 추가. 공개 시 commit author personal email(naver) 노출은 의도된 identity로 판단.
+
+### N. 다음 라운드 후보 (사장 결정 안건)
+- **6/23 전환 작업** — mix-optimal PM을 `claude-opus-4-8`로 수정 (stale 배지가 6/23부터 자동 표시됨) + fable-5 vs opus-4-8 benchmark 비교.
+- **packaged 리소스 전략 PR** — extraResources(core/.claude) + workspace→userData 이전 + NSIS 인스톨러 + `app.setLoginItemSettings` 부팅 자동 시작. spike에서 경로 문제 확인됨.
+- **worktree 격리 도입 검토** — landscape 결론 1순위 기술 부채.
+- **PR4 vendor별 토큰 추적** — PR5 거친 알림 가동 후. codex JSON 스키마 확인 필요.
+- **분기 archive export/import** — 두 PC 장부 분리(동기화 안 함) 보완용 단방향 이동.
+- **오픈소스 준비 잔여** — README 영문 병기 구조 + 스크린샷/GIF 슬롯 + LICENSE(MIT) + NOTICE.
+- **외부 CLI 재개 — Gemini/Figma** — Codex 통합 패턴 재사용.
+- **회의 발언 풍선 정밀화 / Witness 패턴(stuck 직원 감지·재spawn)** — polish 안건.
 
 ---
 
@@ -345,12 +376,12 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 
 1. `README.md` + `CLAUDE.md` + 이 `docs/PROGRESS.md` 읽기. 필요 시 `docs/models.md`, `docs/phase{1,2,3}-plan.md`, `docs/skills/README.md`(시각 영역).
 2. 메모리 자동 로드 (`~/.claude/projects/.../memory/MEMORY.md`).
-3. 마지막 commit `4f3f54b` 위에서 시작. 워킹트리 clean 확인.
-4. 사장 다음 지시 대기:
-   - **시각 영역 작업** → 해당 `docs/skills/<name>.md` 먼저 읽고 패턴 따름. 없으면 작은 PR 후 사장 검토 → 깊이 필요하면 skill 신규.
-   - "Phase 4 더 가자" → 회의 말풍선 / walk cycle / 사장 캐릭터 / 시간 흐름 중 사장 통보.
-   - "Codex/Gemini 들어왔어" → `docs/phase3-plan.md` PR1(다중 CLI 백엔드 추상화)부터.
-   - "시연 검증 결과" → C 섹션의 시연 시나리오 안내.
-   - "push 가능" → personal GitHub Desktop swap 확인 후 일괄 push (88개).
-   - "benchmark 시연 결과" → `docs/benchmark.md` 점수 정리 + 회귀 시 시스템 프롬프트 보정.
+3. 마지막 commit 위에서 시작 (`git log --oneline -5`). 워킹트리 clean 확인. origin은 `1435932`까지 push 완료 — 이후 라운드만 미push.
+4. **날짜 확인**: 6/23 이후 첫 세션이면 mix-optimal PM을 `claude-opus-4-8`로 수정 (N 섹션 "6/23 전환 작업") — CatalogSwitcher에 stale 배지 뜨는 게 신호.
+5. 사장 다음 지시 대기:
+   - "benchmark 시연 결과" → fable-5 기준점 vs 이후 점수 비교 (`workspace/benchmark-results.json`의 model 필드) + 회귀 시 시스템 프롬프트 보정.
+   - "패키징 마저 가자" → N 섹션 packaged 리소스 전략 PR (extraResources + userData + NSIS + 자동 시작).
+   - "공개 준비 가자" → landscape.md 포지셔닝 + N 섹션 오픈소스 잔여.
+   - **시각 영역 작업** → 해당 `docs/skills/<name>.md` 먼저 읽고 패턴 따름.
+   - "Gemini/Figma 들어왔어" → Codex 통합 패턴 재사용 (`app/src/main/spawn/`).
    - 다른 안건 → 작은 단위로 분해 후 진행.
