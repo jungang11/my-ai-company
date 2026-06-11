@@ -174,7 +174,12 @@ export function BenchmarkPanel({ onClose, onSend, catalogId }: Props) {
                         <div
                           className="flex items-center gap-0.5"
                           title={`평가 history (오래된 → 최근, 최대 10개): ${hist
-                            .map((h) => `${SCORE_LABEL[h.score]} ${new Date(h.ts).toLocaleString()}`)
+                            .map(
+                              (h) =>
+                                `${SCORE_LABEL[h.score]} ${new Date(h.ts).toLocaleString()}${
+                                  h.model ? ` [${h.model}]` : ''
+                                }`,
+                            )
                             .join(' / ')}`}
                         >
                           {hist.slice(-5).map((h, i) => (

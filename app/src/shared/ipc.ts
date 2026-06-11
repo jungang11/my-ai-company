@@ -27,6 +27,8 @@ export type BenchmarkResult = {
   catalogId: string;
   ts: number;
   note?: string;
+  /** 채점 시점 PM 모델 — fable-5 기준점 vs opus-4-8 회귀 비교용. main이 자동 부착. */
+  model?: string;
 };
 
 export type BenchmarkResults = {
