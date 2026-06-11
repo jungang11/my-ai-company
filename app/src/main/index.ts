@@ -23,6 +23,10 @@ import { getStatusInit } from './status.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// 다른 창에 가려져도 렌더링 유지 — 가려지면 Chromium이 페인트를 멈춰서
+// 스크린샷 기반 visual QA 루프(scripts/screenshot-app.ps1)가 stale 프레임을 잡음.
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
+
 let mainWindow: BrowserWindow | null = null;
 
 // PM 응답을 renderer로 흘려보내는 콜백 집합. wirePM에서 사장의 ipcMain.handle을 통해 호출되거나,

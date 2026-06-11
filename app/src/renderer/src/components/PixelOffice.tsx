@@ -25,6 +25,9 @@ type Props = {
   onSend: (text: string) => void;
 };
 
+// 좌표 캘리브레이션용 그리드 (10% 간격). 배경 교체 등으로 재캘리브레이션 시 true로.
+const DEBUG_GRID = false;
+
 type Seat = {
   employeeId: string;
   name: string;
@@ -39,12 +42,12 @@ type Seat = {
 // PM=상단 단독 책상, 직원 5명=대각 2열 (6번째 책상은 공석 — 신규 직원 슬롯).
 // 회의 테이블 중심 ≈ (74,41). 둘레 6명 — PM이 top center에서 주재.
 const SEATS: readonly Seat[] = [
-  { employeeId: 'pm',        name: '박PM',   role: 'PM',        x: 56, y: 20, meetingX: 74, meetingY: 32 },
-  { employeeId: 'dev-1',     name: '김개발', role: 'Engineer',  x: 25, y: 38, meetingX: 66, meetingY: 36 },
-  { employeeId: 'dev-arch',  name: '박아키', role: 'Architect', x: 35, y: 44, meetingX: 82, meetingY: 36 },
-  { employeeId: 'planner-1', name: '이기획', role: 'Planner',   x: 45, y: 50, meetingX: 66, meetingY: 46 },
-  { employeeId: 'qa-1',      name: '정검증', role: 'QA',        x: 17, y: 53, meetingX: 82, meetingY: 46 },
-  { employeeId: 'utility-1', name: '막내',   role: 'Utility',   x: 27, y: 59, meetingX: 74, meetingY: 50 },
+  { employeeId: 'pm',        name: '박PM',   role: 'PM',        x: 58, y: 34, meetingX: 74, meetingY: 32 },
+  { employeeId: 'dev-1',     name: '김개발', role: 'Engineer',  x: 30, y: 47, meetingX: 66, meetingY: 36 },
+  { employeeId: 'dev-arch',  name: '박아키', role: 'Architect', x: 38, y: 52, meetingX: 82, meetingY: 36 },
+  { employeeId: 'planner-1', name: '이기획', role: 'Planner',   x: 46, y: 58, meetingX: 66, meetingY: 46 },
+  { employeeId: 'qa-1',      name: '정검증', role: 'QA',        x: 37, y: 67, meetingX: 82, meetingY: 46 },
+  { employeeId: 'utility-1', name: '막내',   role: 'Utility',   x: 48, y: 73, meetingX: 74, meetingY: 50 },
 ];
 
 export function PixelOffice({
@@ -214,6 +217,31 @@ export function PixelOffice({
               className="pointer-events-none absolute inset-0 h-full w-full"
               style={{ imageRendering: 'pixelated' }}
             />
+            {DEBUG_GRID &&
+              Array.from({ length: 9 }, (_, i) => (i + 1) * 10).map((p) => (
+                <div key={`grid-${p}`} className="pointer-events-none">
+                  <div
+                    className="absolute top-0 h-full w-px bg-rose-500/50"
+                    style={{ left: `${p}%` }}
+                  />
+                  <div
+                    className="absolute left-0 h-px w-full bg-rose-500/50"
+                    style={{ top: `${p}%` }}
+                  />
+                  <span
+                    className="absolute text-[9px] font-bold text-rose-300"
+                    style={{ left: `${p}%`, top: 0 }}
+                  >
+                    {p}
+                  </span>
+                  <span
+                    className="absolute text-[9px] font-bold text-rose-300"
+                    style={{ left: 0, top: `${p}%` }}
+                  >
+                    {p}
+                  </span>
+                </div>
+              ))}
             {/* 회의/회고 모드 cue — 배경 위 테두리 glow (Zones 사각형은 iso와 안 맞아 회수) */}
             {meetingMode && (
               <div
@@ -253,8 +281,8 @@ export function PixelOffice({
 
             {/* 사장 캐릭터 — 입구(좌하단 문) 옆 default. 회의 모드 시 테이블 아래쪽에서 PM과 대면 — 둘레 6명 자리 안 침범. */}
             <WorkerAtSeat
-              x={meetingMode ? 74 : 12}
-              y={meetingMode ? 58 : 70}
+              x={meetingMode ? 74 : 16}
+              y={meetingMode ? 58 : 76}
               role="Boss"
               name="사장"
               working={false}
