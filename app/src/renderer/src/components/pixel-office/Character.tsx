@@ -37,8 +37,9 @@ export function Character({ role, working, walking, bubbleText }: Props) {
     : 'character-idle';
   return (
     <div className="relative flex flex-col items-center">
+      {/* left-9는 SVG 40px 폭 기준 — 트림 PNG 실폭(~23px)에 맞춰 left-4 (qa-1 회귀 리뷰 발견) */}
       {working && !walking && (
-        <div className="thought-bubble absolute -top-5 left-9 z-10 flex items-center justify-center whitespace-nowrap rounded-md bg-white px-1.5 py-0.5 text-[8px] text-slate-700 shadow-sm ring-1 ring-slate-400">
+        <div className="thought-bubble absolute -top-5 left-4 z-10 flex items-center justify-center whitespace-nowrap rounded-md bg-white px-1.5 py-0.5 text-[8px] text-slate-700 shadow-sm ring-1 ring-slate-400">
           {bubbleText ? bubbleText : '⌨️'}
         </div>
       )}
