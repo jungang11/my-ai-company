@@ -4,6 +4,26 @@
 > 갱신 시점: 2026-06-12 심야 — **이미지 생성 파이프라인 라운드** (섹션 O): codex 내장 gpt-image-2로 픽셀 에셋 생성 + 사무실 isometric 전환(배경 1장 + 캐릭터 오버레이) + 좌표 캘리브레이션 visual QA 루프 + 도트 캐릭터 7종(palette-swap) + kill-tree 고아 버그 픽스 + 운영 전환(Fable 5는 지휘만, 정형 작업 Opus/codex 위임).
 > 이전: 2026-06-11 — **구독 역전 라운드** (섹션 M): 인건비표 개편 + PR5 한도 알림 + landscape.md + 패키징 spike + Fable 5 벤치 준비 + 비밀정보 위생.
 
+## ⏸ 마감 스냅샷 (2026-06-12 — 커밋/푸시 보류 상태)
+
+**사장 지시: git 계정 전환 전까지 신규 커밋 금지.** 사장이 git 로그인 교체 후 "커밋/푸시" 요청 시 진행.
+
+- **로컬 커밋 17개** (`133a0b7`..`3f70328`) — author는 이미 repo-local personal(`ehddnjs5861@naver.com`)로 박혀 있어 안전. push만 대기.
+- **워킹트리 미커밋 대기분** (전부 검증 완료 — 커밋 시 scope별 분리할 것):
+  1. **PR-A: paths 3역할 분리** ✅ — `app/src/main/paths.ts` 신설 + main 9개 파일 치환 + core `getActiveCatalog`만 2-arg 분리 (최소 침습). dev-arch(Opus) 위임 산출 + Fable 검증: **typecheck full green / core 21 tests green / projectRoot 식별자 0건** (2026-06-12). 설계 `docs/workdir-plan.md`(`3f70328`). packaged 함정 선제 해결: userData를 app ready 전 호출 못 하도록 sessions/watcher lazy 함수화.
+  2. **Character.tsx 말풍선 left-4 보정** ✅ — qa-1(Sonnet) 회귀 리뷰 medium 발견분. (주의: Fable이 중간에 JSX 괄호 안 주석으로 web typecheck를 깨뜨렸고 dev-arch가 복구 — 위임 중 같은 파일 동시 수정 금지 원칙의 실증 사례.)
+  3. **models.md 본문 현행화** ✅ — planner-1(Sonnet) 위임 산출, mix-optimal 직접 인용 검수 통과.
+  4. **PROGRESS.md 이 스냅샷 블록 + 위임 운영 절차** — 본 편집.
+  - qa-1 low 보류 2건 (다음 polish 후보): ① killPM 후 systemQueue 미drain ② kill-tree taskkill spawn error 핸들러 부재.
+- **커밋 순서 권장**: ① PR-A `app+core: workdir PR-A — 경로 3역할 분리` (main 9 + core/catalogs/loader.ts + paths.ts) ② `app: 말풍선 left-4 (qa-1 발견)` (Character.tsx) ③ `docs: models.md 현행화` ④ `docs: PROGRESS 마감 스냅샷` → 일괄 push.
+
+### 위임 운영 절차 (2026-06-12 정착 — 새 세션도 이대로)
+- **Fable 5 (지휘 세션)**: 설계·브리프·결과 검토·시각 검수·어려운 결정만. 정형 작업 직접 수행 금지.
+- **위임**: Agent tool로 `.claude/agents` 직군 spawn — 모델은 인건비표 그대로 (dev-arch=opus 명시, dev-1/planner-1/qa-1=기본값 sonnet). 브리프에 필수: 범위 파일 명시 + 검증 단계 + **커밋 금지** + 보고 형식.
+- **검토**: 위임 결과는 반드시 Fable이 diff/보고 검토 — 첫 사이클에서 실보정 2건 나옴 (스프라이트 여백 74%, 위임 중 추가 커밋 미반영). 위임 중 같은 파일 추가 수정 금지.
+- **GPT-5.5/codex**: 이미지 생성(gpt-image-2) + 코드 리뷰 2차 의견. stdin은 파이프로 닫아서 전달 (안 닫으면 hang).
+- **시각 검증**: `scripts/screenshot-app.ps1` + `scripts/crop.mjs` + PixelOffice `DEBUG_GRID` — 캡처→보정→재캡처 자가 루프. 단 앱 창 최소화 금지 (occlusion 스위치로 가림은 OK).
+
 ## ⚠️ 구독 상황 (2026-06-11 확정 — 기존 가정 폐기)
 
 - **Claude Max 5x ($100) 결제.** ~6/22까지 **Claude Fable 5** 사용 가능 (이후 일반 구독 제외, usage credit 종량제 전환, 복귀 미정). 6/23부터 주력 = **Opus 4.8**.
@@ -405,7 +425,7 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 
 1. `README.md` + `CLAUDE.md` + 이 `docs/PROGRESS.md` 읽기. 필요 시 `docs/models.md`, `docs/phase{1,2,3}-plan.md`, `docs/skills/README.md`(시각 영역).
 2. 메모리 자동 로드 (`~/.claude/projects/.../memory/MEMORY.md`).
-3. 마지막 commit 위에서 시작 (`git log --oneline -5`). 워킹트리 clean 확인. origin은 `1435932`까지 push 완료 — 이후 라운드(미push 17개)만 적체.
+3. 마지막 commit 위에서 시작 (`git log --oneline -5`). **워킹트리가 미커밋 상태인 게 정상** — 상단 "⏸ 마감 스냅샷" 블록 참조 (사장 git 계정 전환 대기). 사장 "커밋/푸시" 신호 시 그 블록의 검증 3종 → scope별 분리 커밋 → 일괄 push 순서로.
 4. **날짜 확인**: 6/23 이후 첫 세션이면 mix-optimal PM을 `claude-opus-4-8`로, qa-1을 `gpt-5.3-codex`로 수정 (N 섹션 "6/23 전환 작업") — CatalogSwitcher에 stale 배지 뜨는 게 신호.
 5. 사장 다음 지시 대기:
    - "사무실 캐릭터 마저" → 섹션 N 1순위: 치환은 완료(`9d55ab0`) — 사장 시각 검수 + 어색한 좌표는 스크린샷 루프(scripts/screenshot-app.ps1 + DEBUG_GRID)로 보정.
