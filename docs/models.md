@@ -1,14 +1,12 @@
 # 모델 카탈로그 (적재적소 매핑)
 
-> ⚠️ **2026-06-11 구독 역전**: 아래 직군 매핑 표(섹션 4)는 2026-05-18 기준 — **현행 ground truth는
-> `core/catalogs/mix-optimal.json`** (PM=`claude-fable-5` ~6/22 → 이후 `claude-opus-4-8`,
-> dev-1/planner-1=sonnet 한도 보호 하향, qa-1=Codex 단일(ChatGPT Plus), utility=haiku).
-> 배경/근거는 `docs/PROGRESS.md` 상단 "구독 상황" + 섹션 M.
+> **본문 현행화 완료 (2026-06-12)**. 섹션 4 직군 매핑은 `core/catalogs/mix-optimal.json` 기준으로 교체됨.
+> 구 매핑(2026-05-18)은 섹션 4 하단에 기록 보존.
 >
 > 사장이 직원 JSON의 `model`/`effort` 필드를 채울 때 참고하는 single source of truth.
 > 외부 가격/스펙/벤치마크는 변동하므로 이 문서가 ground truth — 직원 JSON을 여기 기준으로 튜닝.
 >
-> 갱신: 2026-05-18. 출처는 문서 하단.
+> 갱신: 2026-06-12. 출처는 문서 하단.
 
 ## ⚠️ Task tool 패턴 도입 후 모델 매핑 한계 (2026-05-18 추가)
 
@@ -77,17 +75,34 @@ claude CLI `--effort <low|medium|high|xhigh|max>`.
 
 ---
 
-## 4. 직군별 매핑 (Phase 1 채택 — 실측 근거)
+## 4. 직군별 매핑 (현행 — 2026-06-11 구독 역전 이후)
+
+> 출처: `core/catalogs/mix-optimal.json`. `validUntil: 2026-06-22` (Fable 5 + ChatGPT Pro 윈도우).
+> 6/23 이후 전환: PM → `claude-opus-4-8`, qa-1 → `gpt-5.3-codex` (Plus).
+
+| 직군 | vendor | 모델 | effort | 비고 |
+|---|---|---|---|---|
+| **PM** (pm) | anthropic | `claude-fable-5` (~6/22, 이후 `claude-opus-4-8`) | **xhigh** | 사장 직통 + 분할 결정 + 통합 보고. Fable 5 윈도우 중 기준점 적재. |
+| **개발자 일상** (dev-1) | anthropic | `claude-sonnet-4-6` | **high** | 한도 보호 하향. 일상 코드·리팩토링. |
+| **개발자 어려움** (dev-arch) | anthropic | `claude-opus-4-8` | **xhigh** | 아키텍처·race condition·security. |
+| **기획자** (planner-1) | anthropic | `claude-sonnet-4-6` | **high** | 한도 보호 하향. 분석·리서치·문서. |
+| **QA** (qa-1) | openai | `gpt-5.5` (~6/22, 이후 `gpt-5.3-codex`) | **high** | ChatGPT Pro 주간 한정. qa-1 단일 운용. fallbackModel: `gpt-5.3-codex`. |
+| **잡일** (utility-1) | anthropic | `claude-haiku-4-5-20251001` | **low** | 분류·요약·routing·lookup. |
+
+<details>
+<summary>(2026-05-18 초기 매핑 — 기록 보존)</summary>
 
 | 직군 | 모델 | effort | 사유 (벤치마크 + 사례 근거) |
 |---|---|---|---|
 | **PM** (pm) | `claude-opus-4-7` | **xhigh** (max 승격은 어려운 일감만) | 사장 직통 + 분할 결정 + 통합 보고. 컨텍스트 끌고가는 long-horizon agentic — 4.7이 직격타. max는 토큰 트랩이라 xhigh가 sweet spot. |
-| **개발자** (dev-*) | `claude-opus-4-6` (or 4.7) | xhigh | 코딩이 본업이라 SWE-bench 점수 중요. 4.6도 80.8%로 강력 + 비용 절감. 어려운 작업·아키텍처는 4.7로 승격. **검토**: 4.7로 일괄 올리면 quality +7pt, 비용 증가 감수할 가치는 사장 판단. |
+| **개발자** (dev-*) | `claude-opus-4-6` (or 4.7) | xhigh | 코딩이 본업이라 SWE-bench 점수 중요. 4.6도 80.8%로 강력 + 비용 절감. 어려운 작업·아키텍처는 4.7로 승격. |
 | **기획자** (planner-*) | `claude-opus-4-7` | xhigh | 분석/리서치/문서화 — 긴 추론 + 1M context 필요. 4.7의 GPQA/MMMLU 강세가 분석에 직격. |
-| **QA** (qa-*) | `claude-sonnet-4-6` | **high** (반복) | 검증/리뷰는 반복 작업이라 비용 효율 우선. Sonnet 4.6 SWE-bench 79.6%로 Opus 4.6와 거의 동등. high면 충분, max는 낭비. |
+| **QA** (qa-*) | `claude-sonnet-4-6` | **high** (반복) | 검증/리뷰는 반복 작업이라 비용 효율 우선. Sonnet 4.6 SWE-bench 79.6%로 Opus 4.6와 거의 동등. |
 | **잡일** (utility-*) | `claude-haiku-4-5-20251001` | low~medium | 분류/요약/routing/lookup. Haiku 4.5 자체가 sub-agent 권장 모델로 공식 명시. |
 
 **참고**: Anthropic이 권장하는 **"Advisor Strategy"** = Opus를 senior advisor로 두고 Sonnet/Haiku를 executor로 페어링하면 비용 11% 절감 + quality 향상. 우리 구조(PM=Opus 4.7 advisor, sub=Opus 4.6/Sonnet/Haiku executor)가 정확히 그 패턴.
+
+</details>
 
 ---
 
@@ -103,16 +118,16 @@ claude CLI `--effort <low|medium|high|xhigh|max>`.
   │     → Sonnet 4.6 + high (dev-1 spawn)
   │
   ├─ 본격 코딩 (큰 리팩토링, 모듈 추가, 디버깅)
-  │     → Opus 4.6 + xhigh (dev-1)
+  │     → Opus 4.8 + xhigh (dev-arch)
   │
   ├─ 어려운 코딩 (아키텍처, race condition, security)
-  │     → Opus 4.7 + xhigh (또는 max로 승격, dev-1 또는 신규 dev-arch)
+  │     → Opus 4.8 + xhigh (dev-arch)
   │
   ├─ 분석/리서치/문서 작성 (긴 자료, 멀티스텝 reasoning)
-  │     → Opus 4.7 + xhigh (planner-1)
+  │     → Sonnet 4.6 + high (planner-1)
   │
   └─ 검증/리뷰 (코드/문서 PR 점검)
-        → Sonnet 4.6 + high (qa-1)
+        → GPT-5.5 + high (qa-1, Pro 주간 한정)
 ```
 
 ---
@@ -158,6 +173,7 @@ PM이 일감 보고 "이건 Haiku로도 가능"이면 망설이지 말고 Haiku 
 | "코딩 위주는 Opus 4.6" | Opus 4.7이 SWE-bench +7pt — 사장 학습 프로젝트라 quality-first면 4.7 권장 | dev-1을 4.7로 올리거나, dev-1(4.6 일상)/dev-arch(4.7 어려움) 분리 |
 | "기획/리서치는 Opus 4.7" | 그대로 OK (공식 권장 일치) | 변경 없음 |
 | "간단은 Sonnet" | 더 단순한 건 **Haiku 4.5**가 더 합리 (8x 저렴 + sub-agent 공식 권장) | utility-* 직군 추가 검토 |
+| **(2026-06-11 구독 역전)** 옛 가정 전부 역전 | **mix-optimal이 정답** — Claude Max 5x + ChatGPT Pro 윈도우 조합으로 갭 해소. dev-1/planner-1 sonnet 하향이 한도 보호 최선 | 현행 `core/catalogs/mix-optimal.json` 그대로 운용. 6/23 전환 시 PM→opus-4-8, qa-1→gpt-5.3-codex 수정 |
 
 **권장 액션**: 일단 dev-1과 PM의 `effort`를 `max` → `xhigh`로 내림 (PR8c 작업). dev-1 모델은 4.6 유지 (벤치마크/비용 균형), 어려운 일감 발생 시 dev-arch(4.7) 직원 신규 생성하는 방식이 깔끔.
 
