@@ -483,10 +483,11 @@ Pixel art game asset for a cozy office-management sim (Kairosoft-like tone).
 [ATTACH: current office screenshot as style/palette reference]
 
 Subject: {대상 한 줄 — 아래 대상 리스트}
-View (critical): Kairosoft-style flat 3/4 FRONT view (like "Game Dev Story" furniture) —
-camera straight at the object from the front and slightly above, object faces the viewer,
-axis-aligned (horizontal edges stay horizontal), front face + sliver of flat top visible.
-STRICTLY NO isometric projection, NO 45-degree rotation, NO diagonal angle, NO vanishing point.
+View (critical): **2:1 pixel isometric** — 카이로 사무실 신(Game Dev Story 등)의 실제 투영.
+반드시 `references/kairosoftgame_image.jpg`(사장 제공 레퍼런스)를 **codex `-i` 플래그로 첨부**하고
+"match the attached screenshot's projection EXACTLY" 지시. 객체 모서리가 다이아몬드 두 대각 축을 따름.
+(주의: 2026-06-11 시행착오 — "front view"로 교정했다 사장 레퍼런스로 재반전. 텍스트 묘사보다
+레퍼런스 이미지 첨부가 투영각을 훨씬 정확히 고정한다. 시점 논쟁은 레퍼런스 첨부로 끝낼 것.)
 Background (critical): PNG with TRUE TRANSPARENT ALPHA CHANNEL — not white, not gray,
 not a checkerboard pattern. The object floats on nothing.
 Canvas: 1024x1024, object drawn as if on a {64|96}px pixel grid (large visible square pixels, strictly on-grid).
