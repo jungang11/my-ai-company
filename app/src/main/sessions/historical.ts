@@ -7,8 +7,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import {
   DONE_MARKER_NAME,
   OUTPUT_LOG_NAME,
@@ -16,10 +15,13 @@ import {
 } from '@core/spawn/protocol';
 import type { RosterUpdatePayload, SubSessionMetrics } from '../../shared/ipc.js';
 import { getEmployee } from '../employee/manager.js';
+import { runtimeRoot } from '../paths.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = resolve(__dirname, '../../..');
-const sessionsDir = resolve(projectRoot, SESSIONS_DIR);
+// packaged에서 runtimeRoot()=app.getPath('userData')는 app ready 이후라야 안전 →
+// 모듈 top-level 평가 대신 호출 시점 lazy 평가.
+function sessionsDirPath(): string {
+  return resolve(runtimeRoot(), SESSIONS_DIR);
+}
 
 type DoneMarker = {
   exitCode: number;
@@ -48,7 +50,7 @@ export function persistSubSession(input: {
   endedAt: number;
   exitCode: number;
 }): void {
-  const dir = resolve(sessionsDir, input.sessionId);
+  const dir = resolve(sessionsDirPath(), input.sessionId);
   mkdirSync(dir, { recursive: true });
   writeFileSync(resolve(dir, OUTPUT_LOG_NAME), input.output, 'utf-8');
   const marker: DoneMarker = {
@@ -71,6 +73,7 @@ export function persistSubSession(input: {
  * sorting: endedAt 오름차순(오래된 순) — renderer state에 push 시 자연스럽게 누적.
  */
 export function loadHistoricalSessions(): RosterUpdatePayload[] {
+  const sessionsDir = sessionsDirPath();
   if (!existsSync(sessionsDir)) return [];
 
   const entries = readdirSync(sessionsDir)
@@ -144,7 +147,7 @@ export function loadHistoricalSessions(): RosterUpdatePayload[] {
 
 /** workspace/sessions/ 잔여 정리 위해 만든 헬퍼 — 디버그/테스트용. */
 export function appendOutputLog(sessionId: string, text: string): void {
-  const dir = resolve(sessionsDir, sessionId);
+  const dir = resolve(sessionsDirPath(), sessionId);
   mkdirSync(dir, { recursive: true });
   appendFileSync(resolve(dir, OUTPUT_LOG_NAME), text, 'utf-8');
 }

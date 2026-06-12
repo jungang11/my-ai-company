@@ -1,19 +1,21 @@
 import { watch as chokidarWatch, type FSWatcher } from 'chokidar';
 import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { SPAWN_REQUEST_DIR, type SpawnRequest } from '@core/spawn/protocol';
 import { runSubSession, type SubSessionCallback } from './runner.js';
+import { runtimeRoot } from '../paths.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-// __dirname = app/out/main → ../../.. = project root (4 단계 X 3 단계 O)
-const projectRoot = resolve(__dirname, '../../..');
-const spawnDir = resolve(projectRoot, SPAWN_REQUEST_DIR);
+// spawn-request는 가변 상태 → runtime. packaged의 userData는 app ready 이후라야 안전 →
+// 호출 시점 lazy 평가 (startSpawnWatcher/spawnRequestDir 모두 ready 후 호출).
+function spawnDirPath(): string {
+  return resolve(runtimeRoot(), SPAWN_REQUEST_DIR);
+}
 
 let watcher: FSWatcher | null = null;
 
 export function startSpawnWatcher(cb: SubSessionCallback): void {
   if (watcher) return;
+  const spawnDir = spawnDirPath();
   mkdirSync(spawnDir, { recursive: true });
 
   watcher = chokidarWatch(spawnDir, {
@@ -67,6 +69,7 @@ export async function stopSpawnWatcher(): Promise<void> {
 }
 
 export function spawnRequestDir(): string {
+  const spawnDir = spawnDirPath();
   if (!existsSync(spawnDir)) mkdirSync(spawnDir, { recursive: true });
   return spawnDir;
 }

@@ -1,13 +1,11 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { getActiveCatalog } from '@core/catalogs/loader';
 import type { CatalogOverride } from '@core/catalogs/types';
 import type { EmployeeEffort, EmployeeProfile as PublicProfile } from '../../shared/ipc.js';
+import { appResourcesRoot, runtimeRoot } from '../paths.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = resolve(__dirname, '../../..');
-const EMPLOYEES_DIR = resolve(projectRoot, 'core/employees');
+const EMPLOYEES_DIR = resolve(appResourcesRoot(), 'core/employees');
 
 export type { EmployeeEffort };
 
@@ -25,7 +23,7 @@ export function toPublic(p: EmployeeProfile): PublicProfile {
  * vendor / model / effort 만 override (systemPrompt는 base 그대로 — cache hit 보존).
  */
 function applyCatalogOverride(base: EmployeeProfile): EmployeeProfile {
-  const catalog = getActiveCatalog(projectRoot);
+  const catalog = getActiveCatalog(appResourcesRoot(), runtimeRoot());
   if (!catalog) return base;
   const override: CatalogOverride | undefined = catalog.overrides[base.id];
   if (!override) return base;

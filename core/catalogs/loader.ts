@@ -56,6 +56,11 @@ export function setActiveCatalogId(rootDir: string, id: string): void {
   writeFileSync(file, JSON.stringify({ id }, null, 2), 'utf8');
 }
 
-export function getActiveCatalog(rootDir: string): Catalog | null {
-  return getCatalog(rootDir, getActiveCatalogId(rootDir));
+/**
+ * catalogs(읽기 전용 자산)와 active-catalog(가변 상태)는 packaged에서 root가 갈라진다
+ * (resources vs userData). 그래서 dual 사용처인 이 함수만 두 root를 분리해서 받는다.
+ * dev에선 두 인자가 같은 repo root라 동작 불변. 나머지 단일 역할 함수는 1-arg 유지.
+ */
+export function getActiveCatalog(resourcesDir: string, runtimeDir: string): Catalog | null {
+  return getCatalog(resourcesDir, getActiveCatalogId(runtimeDir));
 }

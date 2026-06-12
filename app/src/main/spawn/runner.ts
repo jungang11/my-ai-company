@@ -1,7 +1,6 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import {
   DONE_MARKER_NAME,
   OUTPUT_LOG_NAME,
@@ -12,10 +11,7 @@ import { getEmployee } from '../employee/manager.js';
 import { killTree } from '../kill-tree.js';
 import { StatusTracker } from '../status.js';
 import type { SubSessionMetrics, Vendor } from '../../shared/ipc.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-// __dirname = app/out/main → ../../.. = project root
-const projectRoot = resolve(__dirname, '../../..');
+import { getWorkDir, runtimeRoot } from '../paths.js';
 
 type EmployeeDef = {
   id: string;
@@ -65,7 +61,8 @@ function loadEmployee(employeeId: string): EmployeeDef {
 }
 
 function ensureSessionDir(sessionId: string): string {
-  const dir = resolve(projectRoot, SESSIONS_DIR, sessionId);
+  // 세션 산출물은 가변 상태 → runtime. cwd/-C/--add-dir(작업 대상)은 getWorkDir().
+  const dir = resolve(runtimeRoot(), SESSIONS_DIR, sessionId);
   mkdirSync(dir, { recursive: true });
   return dir;
 }
@@ -109,7 +106,7 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
     '--append-system-prompt',
     employee.systemPrompt,
     '--add-dir',
-    projectRoot,
+    getWorkDir(),
   ];
   if (employee.model) {
     args.push('--model', employee.model);
@@ -119,7 +116,7 @@ export function runSubSession(req: SpawnRequest, cb: SubSessionCallback): void {
   }
 
   const proc = spawn('claude', args, {
-    cwd: projectRoot,
+    cwd: getWorkDir(),
     env: process.env,
     shell: process.platform === 'win32',
   }) as ChildProcessWithoutNullStreams;
@@ -272,7 +269,7 @@ function runCodexSession(
     '--skip-git-repo-check',
     '-s', 'workspace-write', // read + write 명시. --dangerously-bypass와 함께 tool 권한 확실히 부여.
     '--dangerously-bypass-approvals-and-sandbox',
-    '-C', projectRoot,
+    '-C', getWorkDir(),
     '-o', lastMsgPath,
   ];
   if (employee.model) {
@@ -282,7 +279,7 @@ function runCodexSession(
   let proc: ChildProcessWithoutNullStreams;
   try {
     proc = spawn('codex', args, {
-      cwd: projectRoot,
+      cwd: getWorkDir(),
       env: process.env,
       shell: process.platform === 'win32',
     }) as ChildProcessWithoutNullStreams;

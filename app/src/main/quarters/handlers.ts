@@ -1,6 +1,4 @@
 import { ipcMain } from 'electron';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   appendSessionToCurrent,
   archiveQuarter,
@@ -12,12 +10,10 @@ import {
 import type { QuarterMeta } from '@core/quarters/types';
 import { IPC } from '../../shared/ipc.js';
 import { enqueueSystemMessage, type PMCallbacks } from '../employee/pm-runner.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = resolve(__dirname, '../../..');
+import { runtimeRoot } from '../paths.js';
 
 function ensureCurrent(): QuarterMeta {
-  let cur = loadCurrentQuarter(projectRoot);
+  let cur = loadCurrentQuarter(runtimeRoot());
   if (!cur) {
     cur = {
       quarterId: newQuarterId(),
@@ -25,7 +21,7 @@ function ensureCurrent(): QuarterMeta {
       startedAt: Date.now(),
       sessionIds: [],
     };
-    saveCurrentQuarter(projectRoot, cur);
+    saveCurrentQuarter(runtimeRoot(), cur);
   }
   return cur;
 }
@@ -33,7 +29,7 @@ function ensureCurrent(): QuarterMeta {
 // main이 sub-agent done 시 호출 — 현 분기 sessionIds 누적.
 export function recordSessionInQuarter(sessionId: string): void {
   try {
-    appendSessionToCurrent(projectRoot, sessionId);
+    appendSessionToCurrent(runtimeRoot(), sessionId);
   } catch (err) {
     console.warn('[quarters] session 누적 실패:', err);
   }
@@ -48,7 +44,7 @@ export function wireQuartersHandlers(pmCallbacks: PMCallbacks): void {
       _evt,
       args: { title: string; description?: string; previousRetro?: string },
     ): QuarterMeta => {
-      const prev = loadCurrentQuarter(projectRoot);
+      const prev = loadCurrentQuarter(runtimeRoot());
       if (prev) {
         const archived: QuarterMeta = {
           ...prev,
@@ -57,7 +53,7 @@ export function wireQuartersHandlers(pmCallbacks: PMCallbacks): void {
             ? { retrospective: args.previousRetro.trim() }
             : {}),
         };
-        archiveQuarter(projectRoot, archived);
+        archiveQuarter(runtimeRoot(), archived);
       }
       const next: QuarterMeta = {
         quarterId: newQuarterId(),
@@ -66,7 +62,7 @@ export function wireQuartersHandlers(pmCallbacks: PMCallbacks): void {
         startedAt: Date.now(),
         sessionIds: [],
       };
-      saveCurrentQuarter(projectRoot, next);
+      saveCurrentQuarter(runtimeRoot(), next);
 
       // PM에 분기 변경 통지 (시스템 메시지 — busy 시 큐 적재, idle 시 flush).
       const sysMsg =
@@ -82,5 +78,5 @@ export function wireQuartersHandlers(pmCallbacks: PMCallbacks): void {
     },
   );
 
-  ipcMain.handle(IPC.quartersList, (): QuarterMeta[] => listArchivedQuarters(projectRoot));
+  ipcMain.handle(IPC.quartersList, (): QuarterMeta[] => listArchivedQuarters(runtimeRoot()));
 }

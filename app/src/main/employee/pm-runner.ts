@@ -1,14 +1,12 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { killTree } from '../kill-tree.js';
 import { StatusTracker } from '../status.js';
 import type { StatusSnapshot } from '../../shared/ipc.js';
 import { getEmployee, listEmployees } from './manager.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { appResourcesRoot, getWorkDir } from '../paths.js';
 
 type PMDef = {
   id: string;
@@ -19,8 +17,7 @@ type PMDef = {
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 };
 
-const projectRoot = resolve(__dirname, '../../..');
-const PM_DEF_PATH = resolve(projectRoot, 'core/employees/pm.json');
+const PM_DEF_PATH = resolve(appResourcesRoot(), 'core/employees/pm.json');
 
 /**
  * PM 정의를 매 호출마다 read해서 시스템 프롬프트 튜닝 시 dev 재시작 없이 반영.
@@ -181,7 +178,7 @@ export function sendToPM(userText: string, cb: PMCallbacks): void {
     '--system-prompt',
     composedSystemPrompt,
     '--add-dir',
-    projectRoot,
+    getWorkDir(),
   ];
   if (pmDef.model) {
     args.push('--model', pmDef.model);
@@ -192,7 +189,7 @@ export function sendToPM(userText: string, cb: PMCallbacks): void {
 
   // Windows에서 .exe 자동 해석 위해 shell:true 사용 (`where claude` → claude.exe)
   const proc = spawn('claude', args, {
-    cwd: projectRoot,
+    cwd: getWorkDir(),
     env: process.env,
     shell: process.platform === 'win32',
   }) as ChildProcessWithoutNullStreams;

@@ -1,14 +1,12 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { basename, dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { basename, resolve } from 'node:path';
 import type { RateLimitInfo, StatusInit, StatusSnapshot } from '../shared/ipc.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = resolve(__dirname, '../../..');
+import { getWorkDir } from './paths.js';
 
 export function readProjectName(): string {
-  const pkgPath = resolve(projectRoot, 'package.json');
+  const workDir = getWorkDir();
+  const pkgPath = resolve(workDir, 'package.json');
   if (existsSync(pkgPath)) {
     try {
       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { name?: string };
@@ -17,13 +15,13 @@ export function readProjectName(): string {
       /* fallthrough */
     }
   }
-  return basename(projectRoot);
+  return basename(workDir);
 }
 
 export function readBranch(): string {
   try {
     const out = execSync('git rev-parse --abbrev-ref HEAD', {
-      cwd: projectRoot,
+      cwd: getWorkDir(),
       encoding: 'utf-8',
       stdio: ['ignore', 'pipe', 'ignore'],
     });

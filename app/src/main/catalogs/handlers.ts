@@ -1,6 +1,4 @@
 import { ipcMain } from 'electron';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   getActiveCatalogId,
   getCatalog,
@@ -10,18 +8,17 @@ import {
 import type { Catalog } from '@core/catalogs/types';
 import { IPC } from '../../shared/ipc.js';
 import { enqueueSystemMessage, type PMCallbacks } from '../employee/pm-runner.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = resolve(__dirname, '../../..');
+import { appResourcesRoot, runtimeRoot } from '../paths.js';
 
 export function wireCatalogsHandlers(pmCallbacks: PMCallbacks): void {
-  ipcMain.handle(IPC.catalogsList, (): Catalog[] => listCatalogs(projectRoot));
-  ipcMain.handle(IPC.catalogsActive, (): string => getActiveCatalogId(projectRoot));
+  // catalogs 정의(읽기 전용)는 appResources, active 토글 상태는 runtime.
+  ipcMain.handle(IPC.catalogsList, (): Catalog[] => listCatalogs(appResourcesRoot()));
+  ipcMain.handle(IPC.catalogsActive, (): string => getActiveCatalogId(runtimeRoot()));
   ipcMain.handle(IPC.catalogsSetActive, (_evt, id: string): string => {
-    setActiveCatalogId(projectRoot, id);
+    setActiveCatalogId(runtimeRoot(), id);
 
     // catalog 변경 시 PM에 vendor 매핑 통지 — busy 시 큐 적재.
-    const catalog = getCatalog(projectRoot, id);
+    const catalog = getCatalog(appResourcesRoot(), id);
     if (catalog) {
       const mapping = Object.entries(catalog.overrides)
         .map(([empId, ov]) => `- ${empId}: vendor=${ov.vendor ?? '?'} model=${ov.model ?? '?'}`)
