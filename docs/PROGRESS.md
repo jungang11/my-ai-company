@@ -1,33 +1,46 @@
 # 진행 현황 (세션 인수인계)
 
 > 새 세션에서 이 파일을 처음 읽고 바로 작업 이어갈 수 있도록 한 페이지로 정리한 진행표.
-> 갱신 시점: 2026-06-11 — **구독 역전 라운드** (섹션 M): 인건비표 개편 + PR5 한도 알림 + landscape.md + 패키징 spike + Fable 5 벤치 준비 + 비밀정보 위생.
+> 갱신 시점: 2026-06-12 심야 — **이미지 생성 파이프라인 라운드** (섹션 O): codex 내장 gpt-image-2로 픽셀 에셋 생성 + 사무실 isometric 전환(배경 1장 + 캐릭터 오버레이) + 좌표 캘리브레이션 visual QA 루프 + 도트 캐릭터 7종(palette-swap) + kill-tree 고아 버그 픽스 + 운영 전환(Fable 5는 지휘만, 정형 작업 Opus/codex 위임).
+> 이전: 2026-06-11 — **구독 역전 라운드** (섹션 M): 인건비표 개편 + PR5 한도 알림 + landscape.md + 패키징 spike + Fable 5 벤치 준비 + 비밀정보 위생.
 
 ## ⚠️ 구독 상황 (2026-06-11 확정 — 기존 가정 폐기)
 
 - **Claude Max 5x ($100) 결제.** ~6/22까지 **Claude Fable 5** 사용 가능 (이후 일반 구독 제외, usage credit 종량제 전환, 복귀 미정). 6/23부터 주력 = **Opus 4.8**.
 - **ChatGPT: 6/22까지 Pro → 6/23부터 Plus($20).** Codex 한도 축소 — 다발 spawn 불가, **qa-1 단일 직원**으로만 운용.
 - **~6/22 = Fable 5 윈도우**: payroll-os 진척 + BenchmarkPanel에 fable-5 기준점 데이터 남기기 (6/23 이후 opus-4-8 회귀 보정의 비교 기준).
+- **운영 전환 (2026-06-12 사장 지시)**: Fable 5 세션은 **지휘/검토/어려운 결정만**. 정형 작업(분석/리서치/문서/검증/이미지 생성)은 **Opus 4.8 sub-agent + GPT-5.5 codex로 위임**해 Fable 5 토큰 보존.
 - 옛 가정("Claude 다운그레이드 + GPT Pro 유지")에 기반한 결정들 — model-routing-plan 사장 결정 3(`pm-claude-rest-gpt` 첫 시연)·4(utility=Spark), models.md 직군 매핑 표 — 는 **폐기/강등**. 현행 ground truth는 `core/catalogs/mix-optimal.json`.
 
 ---
 
 ## 한 줄 요약
 
-**Phase 1~5 full + model-routing PR1~3·PR5(한도 알림) + BenchmarkPanel(채점 시 PM 모델 자동 기록) + 인건비표 개편 + landscape.md + electron-builder spike 통과**. 주력 catalog = 수정판 `mix-optimal`: PM=`claude-fable-5`(~6/22, 이후 opus-4-8로 수정 필요), dev-1/planner-1=sonnet(한도 보호), qa-1=codex(openai 단일), dev-arch=opus-4-8, utility=haiku. catalog에 `assumes`/`validUntil` 메타데이터 + CatalogSwitcher stale 배지. `pm-claude-rest-gpt`/`gpt-only`는 ChatGPT Pro 전제라 비상용 강등. codex 인증 token single-use 이슈 — 매 logout/login 필요할 수 있음.
+**Phase 1~5 full + model-routing PR1~3·PR5(한도 알림) + BenchmarkPanel(채점 시 PM 모델 자동 기록) + 인건비표 개편 + landscape.md + electron-builder spike + 이미지 생성 파이프라인(codex gpt-image-2) + 사무실 isometric 전환**. 주력 catalog = 수정판 `mix-optimal`: PM=`claude-fable-5`(~6/22, 이후 opus-4-8로 수정 필요), dev-1/planner-1=sonnet(한도 보호), qa-1=`gpt-5.5`(Pro 주간 한정, 6/23 후 gpt-5.3-codex), dev-arch=opus-4-8, utility=haiku. catalog에 `assumes`/`validUntil` 메타데이터 + CatalogSwitcher stale 배지. 사무실 = SVG 가구 → gpt-image-2 iso 배경 1장 + 도트 캐릭터 7종(palette-swap) 오버레이 구조. codex 인증 token single-use 이슈 — 매 logout/login 필요할 수 있음.
 
 ---
 
-## 누적 commit (origin은 `1435932`까지 push 완료 — 88개 적체 해소 확인 2026-06-11. 이번 라운드만 ahead)
+## 누적 commit (origin은 `1435932`까지 push 완료 — 88개 적체 해소 확인 2026-06-11. 이번 라운드 **미push 17개**)
 
 ```
+9d55ab0 app: Character SVG → PNG 도트 스프라이트 치환 (Opus 위임 + 검토 보정)
+e8b5da5 docs: skill 시점 조항 최종 교정 — 2:1 isometric + 레퍼런스 -i 첨부 필수
+85609ab app+chore: 도트 캐릭터 7종 — 베이스 2장 생성 + 팔레트 스왑 6직군
+8d69618 app+chore: iso 좌석 좌표 캘리브레이션 + 스크린샷 visual QA 루프 도구
+9a63b8c app: 사무실 isometric 전환 — gpt-image-2 장면 배경 통합
+f2ae016 app+docs: 카이로 정면 뷰 가구 4종 생성 + 배경 후처리 파이프라인
+38fb69b app: gpt-image-2 바닥 타일 1호 치환 + process-tree kill 버그 수정
+7a0ec3b docs: 덕테이프(GPT Image 2) 리소스 생성 가이드 + 사장 비전 안건 기록
+a051cf7 app+core: markdown singleTilde fix + qa-1 Pro 주간 gpt-5.5 승격
+cc50228 docs: PROGRESS sync — 구독 역전 라운드 (섹션 M) + models.md stale 노트
+─── 여기까지 2026-06-12 라운드 (섹션 O) / 아래는 섹션 M 라운드 (둘 다 미push) ───
 c19f565 chore: workspace gitignore를 deny-all + board.md 예외로 전환 (위생 라운드)
 bbda5f7 core+app: benchmark 채점에 PM 모델 자동 기록 — Fable 5 기준점 준비
 783c8c5 app+chore: electron-builder 패키징 spike — node-pty unpack 검증 통과
 8d35c62 docs: landscape.md — 유사 오케스트레이터 8종 조사 + 공개 포지셔닝
 e69ad48 app: model-routing PR5 — Claude 한도 임계 알림 (거친 휴리스틱)
 133a0b7 core+app: 인건비표 개편 — Fable 5 윈도우 + ChatGPT Plus 다운그레이드 반영
-─── 여기까지 2026-06-11 라운드 (미push) / 아래는 push 완료 ───
+─── 여기까지 미push (origin..HEAD 15개) / 아래는 push 완료 ───
 1435932 app: StatusBar 현 분기 cost 추가 (Q $X.XXXX amber)
 3f34011 app: 종료 카드 1줄 압축 + 4개 cap + 더보기 토글 (사장 폴리시)
 6cb2712 app: BenchmarkMatrix — catalog × scenario history grid 모달
@@ -119,7 +132,7 @@ cd7a50f perf: 토큰 최적화 1차 (PR9)
 bc8242a core+app: PM sub 결과 read 자동 보고 (PR7)
 ```
 
-origin은 `85556a7`까지 push 됨. **회사 GitHub Desktop 로그인이라 personal repo push 권한 없음** (어제 patch-to-tc 케이스에서 403 확인). 퇴근 후 personal로 swap → 일괄 push.
+origin은 `1435932`까지 push 됨. **회사 GitHub Desktop 로그인이라 personal repo push 권한 없음** (어제 patch-to-tc 케이스에서 403 확인). 퇴근 후 personal로 swap → 일괄 push. **현재 미push 17개 (origin/main..HEAD, docs sync 포함).**
 
 ---
 
@@ -142,13 +155,14 @@ origin은 `85556a7`까지 push 됨. **회사 GitHub Desktop 로그인이라 pers
    - **직원 명부 (6/6 활성)** — 6명 카드 + 체크박스 토글 (PM은 disabled).
    - **작업 중** / **최근 종료** — PM이 Task tool로 spawn한 sub-agent 카드.
 3. **중앙 PM 채팅**:
-   - 사장 ↔ PM(Opus 4.7) 직통. `--system-prompt` + `--tools "Task,Write"`.
+   - 사장 ↔ PM(Fable 5/Opus 4.8) 직통. `--system-prompt` + `--tools "Task,Write"`.
    - PM이 자율 분배: 사장이 일감 던지면 PM이 직접 답 vs Task tool spawn 판단.
    - `회의:` prefix → PM이 다수 직원에 동시 spawn.
    - **react-markdown** 렌더링 (header/list/table/code/strong/em).
    - 메시지 보내면 입력창 위 banner "⏳ PM 응답 준비 중..." (첫 chunk 시 사라짐).
 4. **하단 statusbar**: project · branch · model · ctx %(마지막 turn 점유) · tok 누적 · cache hit% (R/C) · cost · 5h reset.
 5. sub 종료 → 좌측 카드 "최근 종료"로 → 클릭하면 모달에 **markdown 렌더링된 전체 output** + model/tok/cache/cost 메타.
+6. **사무실 모달** (Phase 4): gpt-image-2 iso 배경 1장 + 도트 캐릭터 7종(palette-swap 6직군 + 사장) 오버레이. 캐릭터 책상 좌표 캘리브레이션 완료. 6번째 책상 = 신규 직원 공석.
 
 ---
 
@@ -156,14 +170,14 @@ origin은 `85556a7`까지 push 됨. **회사 GitHub Desktop 로그인이라 pers
 
 | 직군 | 이름 | 모델 (`.claude/agents/`) | 역할 |
 |---|---|---|---|
-| PM | 박PM | `claude-opus-4-7` (xhigh) | 사장 직통, Task tool로 분배, 통합 보고 (항상 활성) |
-| 개발자 (일상) | 김개발 (dev-1) | `opus` | 일상 코드 작성·리팩토링 |
-| 개발자 (어려움) | 박아키 (dev-arch) | `opus` | 아키텍처/race/security/디버깅 finalize |
-| 기획자 | 이기획 (planner-1) | `opus` | 분석·리서치·문서 (+WebSearch) |
-| QA | 정검증 (qa-1) | `sonnet` | 검증·리뷰·회귀 |
+| PM | 박PM | `claude-fable-5` (~6/22, 이후 opus-4-8) | 사장 직통, Task tool로 분배, 통합 보고 (항상 활성) |
+| 개발자 (일상) | 김개발 (dev-1) | `sonnet` (한도 보호) | 일상 코드 작성·리팩토링 |
+| 개발자 (어려움) | 박아키 (dev-arch) | `opus-4-8` | 아키텍처/race/security/디버깅 finalize |
+| 기획자 | 이기획 (planner-1) | `sonnet` (한도 보호) | 분석·리서치·문서 (+WebSearch) |
+| QA | 정검증 (qa-1) | `gpt-5.5` (Pro 주간 한정, 6/23 후 gpt-5.3-codex) | 검증·리뷰·회귀 |
 | 잡일 | 막내 (utility-1) | `haiku` | 분류·추출·포맷·짧은 요약·lookup |
 
-자세한 매핑 근거 + 모델 한계: `docs/models.md`.
+자세한 매핑 근거 + 모델 한계: `docs/models.md`. 현행 ground truth는 `core/catalogs/mix-optimal.json`.
 
 ---
 
@@ -348,6 +362,8 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 - ✅ **비밀정보 위생** (`c19f565`) — 히스토리 전수 스캔: 토큰 패턴(sk-ant/ghp_/Bearer 등) 0건, .env/settings.local.json 커밋 이력 없음. 유일 노출은 c1f33b3의 `workspace/quarters/current.json`(분기 메타뿐, 무해 — rewrite 불필요). gitignore를 `workspace/*` + `!workspace/board.md` deny-all로 전환 + `app/dist-builder/` + `.omc/` 추가. 공개 시 commit author personal email(naver) 노출은 의도된 identity로 판단.
 
 ### N. 다음 라운드 후보 (사장 결정 안건)
+- **도트 캐릭터 사장 시각 검수** — Character.tsx SVG → PNG 치환 **완료** (`9d55ab0`, Opus 위임 + 트림 보정). 사장 `npm run dev`로 iso 배경 + 캐릭터 정렬·톤 시각 검수만 남음. **섹션 O 마무리 1순위.**
+- **사장 push 신호 대기 (미push 17개)** — 회사 GitHub Desktop 로그인이라 personal repo push 403. 사장 personal swap 후 일괄 push. 그 전까지 commit만 누적.
 - **6/23 전환 작업** — mix-optimal에서 PM을 `claude-opus-4-8`로, **qa-1을 `gpt-5.3-codex`(Plus)로** 수정 (stale 배지가 6/23부터 자동 표시됨) + fable-5 vs opus-4-8 benchmark 비교. (qa-1은 Pro 주간 한정 `gpt-5.5`로 운용 중 — 2026-06-11 사장 지시)
 - **프로젝트 경로 인식 ("출근 경로")** — 사장 비전 (2026-06-11): 터미널처럼 앱이 임의 프로젝트 폴더를 골라 PM/직원을 그 cwd로 spawn → 프로젝트별 CLAUDE.md/AGENTS.md 지침 자동 적용. StatusBar에 경로/프로젝트 표시 (codex statusline처럼). **packaged 리소스 전략 PR과 본체가 동일** (projectRoot=앱 리소스 vs workDir=작업 대상 분리)이라 묶어 진행 추천.
 - **packaged 리소스 전략 PR** — extraResources(core/.claude) + workspace→userData 이전 + NSIS 인스톨러 + `app.setLoginItemSettings` 부팅 자동 시작. spike에서 경로 문제 확인됨.
@@ -357,6 +373,18 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 - **오픈소스 준비 잔여** — README 영문 병기 구조 + 스크린샷/GIF 슬롯 + LICENSE(MIT) + NOTICE.
 - **외부 CLI 재개 — Gemini/Figma** — Codex 통합 패턴 재사용.
 - **회의 발언 풍선 정밀화 / Witness 패턴(stuck 직원 감지·재spawn)** — polish 안건.
+
+### O. 이미지 생성 파이프라인 + 사무실 isometric 전환 (2026-06-12, 사장 안건 "덕테이프"로 픽셀 에셋 자체 생성)
+
+사장 비전: SVG 손그림 가구를 진짜 픽셀 에셋으로 교체. codex 내장 **gpt-image-2**(2026-04-21~ 출시, ChatGPT 구독 OAuth 한도라 Claude 토큰 0)를 에셋 생성 엔진으로 채택. 시행착오 3개가 skill에 박제됨:
+
+- ✅ **리소스 생성 가이드 + 후처리 파이프라인** (`7a0ec3b`, `f2ae016`, `38fb69b`) — `docs/skills/` 가이드에 gpt-image-2 활용법 정착. 발견 ① **낱장 사물은 시점 지시를 무시하고 정면 뷰로 회귀** → 개별 가구 대신 **장면 통생성**이 정답. ② **투명 배경 대신 체커보드 픽셀이 박히는 비결정 문제** → `scripts/strip-checker-bg.mjs`(pngjs flood-fill)로 후처리. ③ **codex가 생성 후 스크립트 검증 루프를 13분 돌며 토큰 낭비** → prompt에 "검증 금지" 조항. + codex stdin 미close 시 hang → 파이프로 전달. 바닥 타일 1호 치환으로 파이프라인 검증.
+- ✅ **사무실 isometric 전환** (`9a63b8c`) — 사장 레퍼런스(`references/kairosoftgame_image.jpg` Game Dev Story 스크린샷)를 `-i`로 첨부해 "빈 iso 사무실 전체" 1장 생성(office-bg.png) → PixelOffice가 SVG Floor/Walls/가구 → **배경 1장 + 캐릭터 오버레이** 구조로 전환. 3:2 aspect 고정 컨테이너. Zones 사각형 회수(테두리 glow로 대체). 6번째 책상 공석 = 신규 직원 슬롯.
+- ✅ **좌표 캘리브레이션 + visual QA 루프** (`8d69618`) — `scripts/screenshot-app.ps1`(PrintWindow로 가려진 창 캡처 — CalculateNativeWinOcclusion 비활성 스위치 main에 추가) + `scripts/crop.mjs`(크롭+업스케일) + DEBUG_GRID 스캐폴드로 스크린샷 3회전 만에 전 캐릭터 책상 정착.
+- ✅ **도트 캐릭터 7종** (`85609ab`) — char-worker-base(마젠타 셔츠 마커) + char-boss 2장 생성 → `scripts/palette-swap.mjs`가 마젠타를 ROLE_PALETTE 6색으로 치환. 실루엣 100% 동일. **Character.tsx SVG → PNG 치환 완료** (`9d55ab0`) — Opus 위임 + Fable 검토에서 투명 여백 74% 발견, `scripts/trim-alpha.mjs` 트림(1254²→330x582) + height 기준 렌더 보정. 사장 시각 검수만 남음 (섹션 N 1순위).
+- ✅ **skill 시점 조항 교정** (`e8b5da5`) — 2:1 isometric 명시 + 레퍼런스 `-i` 첨부를 필수 단계로 박제.
+- ✅ **버그 픽스** (`38fb69b`, `a051cf7`) — `app/src/main/kill-tree.ts`: Windows shell:true spawn에서 `proc.kill()`이 cmd 래퍼만 죽이고 codex 고아가 한도를 계속 태우던 문제 → `taskkill /T /F`로 프로세스 트리 전체 종료. + remark-gfm singleTilde가 "PR1~14" 범위 표기를 strikethrough로 먹던 표시 버그 수정 + qa-1을 Pro 주간 한정 `gpt-5.5`로 승격.
+- ✅ **운영 전환** (2026-06-12 사장 지시) — Fable 5 세션은 **지휘/검토/어려운 결정만**, 정형 작업(분석/리서치/문서/이미지 생성)은 **Opus 4.8 sub-agent + GPT-5.5 codex로 위임**해 Fable 5 토큰 보존.
 
 ---
 
@@ -377,12 +405,13 @@ Phase 5 게임 polish 잠시 멈춤 + 업무 퀄리티 강화로 전환.
 
 1. `README.md` + `CLAUDE.md` + 이 `docs/PROGRESS.md` 읽기. 필요 시 `docs/models.md`, `docs/phase{1,2,3}-plan.md`, `docs/skills/README.md`(시각 영역).
 2. 메모리 자동 로드 (`~/.claude/projects/.../memory/MEMORY.md`).
-3. 마지막 commit 위에서 시작 (`git log --oneline -5`). 워킹트리 clean 확인. origin은 `1435932`까지 push 완료 — 이후 라운드만 미push.
-4. **날짜 확인**: 6/23 이후 첫 세션이면 mix-optimal PM을 `claude-opus-4-8`로 수정 (N 섹션 "6/23 전환 작업") — CatalogSwitcher에 stale 배지 뜨는 게 신호.
+3. 마지막 commit 위에서 시작 (`git log --oneline -5`). 워킹트리 clean 확인. origin은 `1435932`까지 push 완료 — 이후 라운드(미push 17개)만 적체.
+4. **날짜 확인**: 6/23 이후 첫 세션이면 mix-optimal PM을 `claude-opus-4-8`로, qa-1을 `gpt-5.3-codex`로 수정 (N 섹션 "6/23 전환 작업") — CatalogSwitcher에 stale 배지 뜨는 게 신호.
 5. 사장 다음 지시 대기:
+   - "사무실 캐릭터 마저" → 섹션 N 1순위: 치환은 완료(`9d55ab0`) — 사장 시각 검수 + 어색한 좌표는 스크린샷 루프(scripts/screenshot-app.ps1 + DEBUG_GRID)로 보정.
    - "benchmark 시연 결과" → fable-5 기준점 vs 이후 점수 비교 (`workspace/benchmark-results.json`의 model 필드) + 회귀 시 시스템 프롬프트 보정.
    - "패키징 마저 가자" → N 섹션 packaged 리소스 전략 PR (extraResources + userData + NSIS + 자동 시작).
    - "공개 준비 가자" → landscape.md 포지셔닝 + N 섹션 오픈소스 잔여.
-   - **시각 영역 작업** → 해당 `docs/skills/<name>.md` 먼저 읽고 패턴 따름.
+   - **시각 영역 작업** → 해당 `docs/skills/<name>.md` 먼저 읽고 패턴 따름 (gpt-image-2 생성 가이드 포함).
    - "Gemini/Figma 들어왔어" → Codex 통합 패턴 재사용 (`app/src/main/spawn/`).
    - 다른 안건 → 작은 단위로 분해 후 진행.
